@@ -17,6 +17,10 @@ const ExpenseTracker = () => {
   const [showChart, setShowChart] = useState(false);
   const [chartMode, setChartMode] = useState('total'); // 'total' or 'net'
   const [chartPeriod] = useState('weekly');
+  
+  // New state for grocery chart
+  const [showGroceryChart, setShowGroceryChart] = useState(false);
+  const [groceryChartPeriod] = useState('weekly');
 
   const categories = [
     { value: 'Groceries', icon: ShoppingCart, color: 'bg-green-500' },
@@ -104,11 +108,6 @@ const ExpenseTracker = () => {
   const totalFuelSpent = fuelExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const totalFuelReimbursements = fuelReimbursements.reduce((sum, expense) => sum + expense.amount, 0);
   
-  // Calculate GROSS total expenses (only actual expenses, excluding reimbursements received)
-  //const totalExpenses = expenses.reduce((sum, expense) => {
-   // return expense.category === 'Fuel Reimbursement' ? sum : sum + expense.amount;
-  //}, 0);
-  
   // Calculate NET expenses (total expenses minus all reimbursements)
   const totalReimbursements = expenses.reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
   const netExpenses = expenses.reduce((sum, expense) => {
@@ -174,8 +173,8 @@ const ExpenseTracker = () => {
     };
   }).filter(item => item.count > 0);
 
-  // Weekly and Monthly fuel chart data - UPDATED
-  const getChartData = () => {
+  // Fuel chart data function
+  const getFuelChartData = () => {
     const periods = {};
     const fuelExpenses = expenses.filter(expense => expense.category === 'Car - Fuel');
     const fuelReimbursements = expenses.filter(expense => expense.category === 'Fuel Reimbursement');
@@ -243,7 +242,60 @@ const ExpenseTracker = () => {
       }));
   };
 
-  const chartData = getChartData();
+  // New function for grocery chart data
+  const getGroceryChartData = () => {
+    const periods = {};
+    const groceryExpenses = expenses.filter(expense => 
+      expense.category === 'Groceries' || expense.category === 'Dining'
+    );
+    
+    // Group grocery and dining expenses by period
+    groceryExpenses.forEach(expense => {
+      const date = new Date(expense.date);
+      let periodKey, periodLabel;
+      
+      if (groceryChartPeriod === 'weekly') {
+        const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+        periodKey = weekStart.toISOString().split('T')[0];
+        periodLabel = weekStart.toLocaleDateString('en-GB', { 
+          day: 'numeric', 
+          month: 'short' 
+        });
+      } else { // monthly
+        periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        periodLabel = date.toLocaleDateString('en-GB', { 
+          month: 'short', 
+          year: 'numeric' 
+        });
+      }
+      
+      if (!periods[periodKey]) {
+        periods[periodKey] = { 
+          period: periodKey, 
+          groceries: 0, 
+          dining: 0, 
+          total: 0, 
+          periodLabel 
+        };
+      }
+      
+      if (expense.category === 'Groceries') {
+        periods[periodKey].groceries += expense.amount;
+      } else if (expense.category === 'Dining') {
+        periods[periodKey].dining += expense.amount;
+      }
+      periods[periodKey].total += expense.amount;
+    });
+    
+    const limit = groceryChartPeriod === 'weekly' ? -8 : -6; // Last 8 weeks or 6 months
+    
+    return Object.values(periods)
+      .sort((a, b) => new Date(a.period) - new Date(b.period))
+      .slice(limit);
+  };
+
+  const chartData = getFuelChartData();
+  const groceryChartData = getGroceryChartData();
 
   const showReimbursementFields = formData.category === 'Car - Fuel' || formData.category === 'Car - Maintenance';
 
@@ -259,7 +311,7 @@ const ExpenseTracker = () => {
           <p className="text-gray-600">Track your groceries, dining, and car expenses</p>
         </div>
 
-        {/* Summary Cards - Updated with Separate Car and Grocery Sections */}
+        {/* Summary Cards */}
         <div className="space-y-6 mb-8">
           {/* Overall Summary */}
           <div>
@@ -376,86 +428,134 @@ const ExpenseTracker = () => {
           </div>
         </div>
 
-        {/* Fuel Chart Section - RESTORED */}
-        {chartData.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <BarChart3 className="text-blue-600" size={24} />
-                Weekly Fuel Spending
-              </h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowChart(!showChart)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {showChart ? 'Hide Chart' : 'Show Chart'}
-                </button>
-                {showChart && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setChartMode('total')}
-                      className={`px-3 py-2 rounded-lg transition-colors ${
-                        chartMode === 'total' 
-                          ? 'bg-red-600 text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      Total
-                    </button>
-                    <button
-                      onClick={() => setChartMode('net')}
-                      className={`px-3 py-2 rounded-lg transition-colors ${
-                        chartMode === 'net' 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      Net
-                    </button>
-                  </div>
-                )}
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Fuel Chart */}
+          {chartData.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <BarChart3 className="text-red-600" size={24} />
+                  Weekly Fuel Spending
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowChart(!showChart)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    {showChart ? 'Hide' : 'Show'}
+                  </button>
+                  {showChart && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setChartMode('total')}
+                        className={`px-3 py-2 rounded-lg transition-colors ${
+                          chartMode === 'total' 
+                            ? 'bg-red-600 text-white' 
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Total
+                      </button>
+                      <button
+                        onClick={() => setChartMode('net')}
+                        className={`px-3 py-2 rounded-lg transition-colors ${
+                          chartMode === 'net' 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Net
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            {showChart && (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="periodLabel" />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value, name) => [`£${value.toFixed(2)}`, name]}
-                      labelStyle={{ color: '#374151' }}
-                    />
-                    <Legend />
-                    {chartMode === 'total' ? (
-                      <>
-                        <Bar 
-                          dataKey="total" 
-                          fill="#ef4444" 
-                          name="Total Spent"
-                        />
-                        <Bar 
-                          dataKey="directReimbursements" 
-                          fill="#06c42f" 
-                          name="Fuel Reimbursements"
-                        />
-                      </>
-                    ) : (
-                      <Bar 
-                        dataKey="net" 
-                        fill="#6366f1" 
-                        name="Net Spending"
+              
+              {showChart && (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="periodLabel" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value, name) => [`£${value.toFixed(2)}`, name]}
+                        labelStyle={{ color: '#374151' }}
                       />
-                    )}
-                  </BarChart>
-                </ResponsiveContainer>
+                      <Legend />
+                      {chartMode === 'total' ? (
+                        <>
+                          <Bar 
+                            dataKey="total" 
+                            fill="#ef4444" 
+                            name="Total Spent"
+                          />
+                          <Bar 
+                            dataKey="directReimbursements" 
+                            fill="#06c42f" 
+                            name="Fuel Reimbursements"
+                          />
+                        </>
+                      ) : (
+                        <Bar 
+                          dataKey="net" 
+                          fill="#6366f1" 
+                          name="Net Spending"
+                        />
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* New Grocery Chart */}
+          {groceryChartData.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <BarChart3 className="text-green-600" size={24} />
+                  Weekly Grocery & Dining
+                </h3>
+                <button
+                  onClick={() => setShowGroceryChart(!showGroceryChart)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  {showGroceryChart ? 'Hide' : 'Show'}
+                </button>
               </div>
-            )}
-          </div>
-        )}
+              
+              {showGroceryChart && (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={groceryChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="periodLabel" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value, name) => [`£${value.toFixed(2)}`, name]}
+                        labelStyle={{ color: '#374151' }}
+                      />
+                      <Legend />
+                      <Bar 
+                        dataKey="groceries" 
+                        fill="#10b981" 
+                        name="Groceries"
+                      />
+                      <Bar 
+                        dataKey="dining" 
+                        fill="#3b82f6" 
+                        name="Dining"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Add Expense Form */}

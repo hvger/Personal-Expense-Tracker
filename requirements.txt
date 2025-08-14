@@ -1,0 +1,8 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+pandas==2.1.4
+numpy==1.24.3
+gunicorn==21.2.0
+Werkzeug==2.3.7
+gspread==6.0.2
+oauth2client==4.1.3

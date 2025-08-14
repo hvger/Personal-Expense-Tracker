@@ -15,7 +15,7 @@ CORS(app)  # Enable CORS for React frontend
 # Google Sheets Setup
 # -----------------------------
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-SHEET_NAME = os.environ.get("expenses")  # e.g., "Expenses"
+SHEET_NAME = os.environ.get("SHEET_NAME") # e.g., "Expenses"
 
 
 creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)

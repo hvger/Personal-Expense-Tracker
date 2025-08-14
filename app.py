@@ -12,7 +12,7 @@ app = Flask(__name__, static_folder='build')
 CORS(app)
 
 # Google Sheets Setup
-SHEET_NAME = "Expenses"  # Change to your actual Google Sheet name
+SHEET_NAME = "expenses"  # Change to your actual Google Sheet name
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 # Load creds from env

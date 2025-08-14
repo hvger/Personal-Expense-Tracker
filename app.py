@@ -17,14 +17,17 @@ CORS(app)  # Enable CORS for React frontend
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
 SHEET_NAME = os.environ.get("expenses")  # e.g., "Expenses"
 
-if not GOOGLE_CREDENTIALS_JSON or not SHEET_NAME:
-    raise RuntimeError("Environment variables GOOGLE_CREDENTIALS_JSON or SHEET_NAME not set!")
 
 creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 gc = gspread.authorize(credentials)
 sheet = gc.open(SHEET_NAME).sheet1
+
+if not GOOGLE_CREDENTIALS_JSON :
+    raise RuntimeError("Environment variables GOOGLE_CREDENTIALS_JSON  not set!")
+if not SHEET_NAME :
+    raise RuntimeError("Environment variables SHEET NAME  not set!")
 
 # -----------------------------
 # Helper functions

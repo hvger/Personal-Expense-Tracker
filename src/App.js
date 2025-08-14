@@ -21,10 +21,12 @@ const ExpenseTracker = () => {
   // New state for grocery chart
   const [showGroceryChart, setShowGroceryChart] = useState(false);
   const [groceryChartPeriod] = useState('weekly');
+  const [groceryChartMode, setGroceryChartMode] = useState('breakdown'); // 'breakdown' or 'total'
 
   const categories = [
     { value: 'Groceries', icon: ShoppingCart, color: 'bg-green-500' },
     { value: 'Dining', icon: Utensils, color: 'bg-blue-500' },
+    { value: 'Small Shop', icon: ShoppingCart, color: 'bg-teal-500' },
     { value: 'Car - Fuel', icon: Car, color: 'bg-red-500' },
     { value: 'Car - Maintenance', icon: Car, color: 'bg-orange-500' },
     { value: 'Fuel Reimbursement', icon: RefreshCw, color: 'bg-purple-500' }
@@ -131,7 +133,9 @@ const ExpenseTracker = () => {
   }).reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
 
   // Grocery-specific calculations
-  const groceryExpenses = expenses.filter(expense => expense.category === 'Groceries' || expense.category === 'Dining');
+  const groceryExpenses = expenses.filter(expense => 
+    expense.category === 'Groceries' || expense.category === 'Dining' || expense.category === 'Small Shop'
+  );
   const totalGrocerySpent = groceryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   
   const weeklyGroceryExpenses = groceryExpenses.filter(expense => {
@@ -246,10 +250,10 @@ const ExpenseTracker = () => {
   const getGroceryChartData = () => {
     const periods = {};
     const groceryExpenses = expenses.filter(expense => 
-      expense.category === 'Groceries' || expense.category === 'Dining'
+      expense.category === 'Groceries' || expense.category === 'Dining' || expense.category === 'Small Shop'
     );
     
-    // Group grocery and dining expenses by period
+    // Group grocery, dining, and small shop expenses by period
     groceryExpenses.forEach(expense => {
       const date = new Date(expense.date);
       let periodKey, periodLabel;
@@ -274,6 +278,7 @@ const ExpenseTracker = () => {
           period: periodKey, 
           groceries: 0, 
           dining: 0, 
+          smallShop: 0,
           total: 0, 
           periodLabel 
         };
@@ -283,6 +288,8 @@ const ExpenseTracker = () => {
         periods[periodKey].groceries += expense.amount;
       } else if (expense.category === 'Dining') {
         periods[periodKey].dining += expense.amount;
+      } else if (expense.category === 'Small Shop') {
+        periods[periodKey].smallShop += expense.amount;
       }
       periods[periodKey].total += expense.amount;
     });
@@ -343,7 +350,7 @@ const ExpenseTracker = () => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <ShoppingCart className="text-green-600" size={20} />
-              Grocery & Dining Summary
+              Grocery, Dining & Small Shop Summary
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
@@ -519,12 +526,38 @@ const ExpenseTracker = () => {
                   <BarChart3 className="text-green-600" size={24} />
                   Weekly Grocery & Dining
                 </h3>
-                <button
-                  onClick={() => setShowGroceryChart(!showGroceryChart)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  {showGroceryChart ? 'Hide' : 'Show'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowGroceryChart(!showGroceryChart)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    {showGroceryChart ? 'Hide' : 'Show'}
+                  </button>
+                  {showGroceryChart && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setGroceryChartMode('breakdown')}
+                        className={`px-3 py-2 rounded-lg transition-colors ${
+                          groceryChartMode === 'breakdown' 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Breakdown
+                      </button>
+                      <button
+                        onClick={() => setGroceryChartMode('total')}
+                        className={`px-3 py-2 rounded-lg transition-colors ${
+                          groceryChartMode === 'total' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Total
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {showGroceryChart && (
@@ -539,16 +572,31 @@ const ExpenseTracker = () => {
                         labelStyle={{ color: '#374151' }}
                       />
                       <Legend />
-                      <Bar 
-                        dataKey="groceries" 
-                        fill="#10b981" 
-                        name="Groceries"
-                      />
-                      <Bar 
-                        dataKey="dining" 
-                        fill="#3b82f6" 
-                        name="Dining"
-                      />
+                      {groceryChartMode === 'breakdown' ? (
+                        <>
+                          <Bar 
+                            dataKey="groceries" 
+                            fill="#10b981" 
+                            name="Groceries"
+                          />
+                          <Bar 
+                            dataKey="dining" 
+                            fill="#3b82f6" 
+                            name="Dining"
+                          />
+                          <Bar 
+                            dataKey="smallShop" 
+                            fill="#14b8a6" 
+                            name="Small Shop"
+                          />
+                        </>
+                      ) : (
+                        <Bar 
+                          dataKey="total" 
+                          fill="#6366f1" 
+                          name="Total Spending"
+                        />
+                      )}
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

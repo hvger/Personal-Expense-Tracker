@@ -16,12 +16,15 @@ const ExpenseTracker = () => {
 
   const [showChart, setShowChart] = useState(false);
   const [chartMode, setChartMode] = useState('total'); // 'total' or 'net'
-  const [chartPeriod] = useState('weekly');
+  const [chartPeriod, setChartPeriod] = useState('recent'); // 'recent' or specific month like '2025-08'
   
   // New state for grocery chart
   const [showGroceryChart, setShowGroceryChart] = useState(false);
-  const [groceryChartPeriod] = useState('weekly');
+  const [groceryChartPeriod, setGroceryChartPeriod] = useState('recent'); // 'recent' or specific month
   const [groceryChartMode, setGroceryChartMode] = useState('breakdown'); // 'breakdown' or 'total'
+  
+  // New state for summary period selection
+  const [summaryPeriod, setSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
 
   const categories = [
     { value: 'Groceries', icon: ShoppingCart, color: 'bg-green-500' },
@@ -91,7 +94,7 @@ const ExpenseTracker = () => {
   // Delete expense
   const deleteExpense = async (id) => {
     try {
-      const response = await fetch(`api/expenses/${id}`, {
+      const response = await fetch(`/api/expenses/${id}`, {
         method: 'DELETE'
       });
 
@@ -117,19 +120,34 @@ const ExpenseTracker = () => {
   }, 0) - totalReimbursements;
 
   const monthlyExpenses = expenses.filter(expense => {
-    const expenseMonth = new Date(expense.date).getMonth();
-    const currentMonth = new Date().getMonth();
-    const expenseYear = new Date(expense.date).getFullYear();
-    const currentYear = new Date().getFullYear();
-    return expenseMonth === currentMonth && expenseYear === currentYear;
+    if (summaryPeriod === 'current') {
+      // Current month logic
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      // Selected month logic
+      const expenseMonth = new Date(expense.date);
+      const [selectedYear, selectedMonth] = summaryPeriod.split('-');
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === summaryPeriod;
+    }
   }).reduce((sum, expense) => {
     return expense.category === 'Fuel Reimbursement' ? sum - expense.amount : sum + expense.amount;
   }, 0) - expenses.filter(expense => {
-    const expenseMonth = new Date(expense.date).getMonth();
-    const currentMonth = new Date().getMonth();
-    const expenseYear = new Date(expense.date).getFullYear();
-    const currentYear = new Date().getFullYear();
-    return expenseMonth === currentMonth && expenseYear === currentYear;
+    if (summaryPeriod === 'current') {
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === summaryPeriod;
+    }
   }).reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
 
   // Grocery-specific calculations
@@ -146,11 +164,17 @@ const ExpenseTracker = () => {
   }).reduce((sum, expense) => sum + expense.amount, 0);
   
   const monthlyGroceryExpenses = groceryExpenses.filter(expense => {
-    const expenseMonth = new Date(expense.date).getMonth();
-    const currentMonth = new Date().getMonth();
-    const expenseYear = new Date(expense.date).getFullYear();
-    const currentYear = new Date().getFullYear();
-    return expenseMonth === currentMonth && expenseYear === currentYear;
+    if (summaryPeriod === 'current') {
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === summaryPeriod;
+    }
   }).reduce((sum, expense) => sum + expense.amount, 0);
 
   // Car-specific calculations
@@ -161,7 +185,27 @@ const ExpenseTracker = () => {
   const totalCarReimbursements = carExpenses.reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
   const netCarExpenses = totalCarSpent - totalCarReimbursements - totalFuelReimbursements;
 
-  // Category breakdown with reimbursement logic
+  // Helper function to get available months from expenses
+  const getAvailableMonths = () => {
+    const months = new Set();
+    expenses.forEach(expense => {
+      const date = new Date(expense.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      months.add(monthKey);
+    });
+    
+    return Array.from(months)
+      .sort((a, b) => new Date(a + '-01') - new Date(b + '-01'))
+      .map(monthKey => {
+        const [year, month] = monthKey.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return {
+          value: monthKey,
+          label: date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+        };
+      });
+  };
+
   const categoryTotals = categories.map(cat => {
     const categoryExpenses = expenses.filter(expense => expense.category === cat.value);
     const total = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -183,24 +227,38 @@ const ExpenseTracker = () => {
     const fuelExpenses = expenses.filter(expense => expense.category === 'Car - Fuel');
     const fuelReimbursements = expenses.filter(expense => expense.category === 'Fuel Reimbursement');
     
+    // Filter by selected period if not 'recent'
+    const filteredFuelExpenses = chartPeriod === 'recent' ? fuelExpenses : 
+      fuelExpenses.filter(expense => {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === chartPeriod;
+      });
+      
+    const filteredFuelReimbursements = chartPeriod === 'recent' ? fuelReimbursements :
+      fuelReimbursements.filter(expense => {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === chartPeriod;
+      });
+    
     // Group fuel expenses by period
-    fuelExpenses.forEach(expense => {
+    filteredFuelExpenses.forEach(expense => {
       const date = new Date(expense.date);
       let periodKey, periodLabel;
       
-      if (chartPeriod === 'weekly') {
+      if (chartPeriod === 'recent') {
+        // Weekly view for recent data
         const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
         periodKey = weekStart.toISOString().split('T')[0];
         periodLabel = weekStart.toLocaleDateString('en-GB', { 
           day: 'numeric', 
           month: 'short' 
         });
-      } else { // monthly
-        periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        periodLabel = date.toLocaleDateString('en-GB', { 
-          month: 'short', 
-          year: 'numeric' 
-        });
+      } else {
+        // Daily view for specific month
+        periodKey = date.toISOString().split('T')[0];
+        periodLabel = date.getDate().toString();
       }
       
       if (!periods[periodKey]) {
@@ -210,23 +268,20 @@ const ExpenseTracker = () => {
     });
     
     // Group fuel reimbursements by period
-    fuelReimbursements.forEach(expense => {
+    filteredFuelReimbursements.forEach(expense => {
       const date = new Date(expense.date);
       let periodKey, periodLabel;
       
-      if (chartPeriod === 'weekly') {
+      if (chartPeriod === 'recent') {
         const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
         periodKey = weekStart.toISOString().split('T')[0];
         periodLabel = weekStart.toLocaleDateString('en-GB', { 
           day: 'numeric', 
           month: 'short' 
         });
-      } else { // monthly
-        periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        periodLabel = date.toLocaleDateString('en-GB', { 
-          month: 'short', 
-          year: 'numeric' 
-        });
+      } else {
+        periodKey = date.toISOString().split('T')[0];
+        periodLabel = date.getDate().toString();
       }
       
       if (!periods[periodKey]) {
@@ -235,15 +290,17 @@ const ExpenseTracker = () => {
       periods[periodKey].directReimbursements += expense.amount;
     });
     
-    const limit = chartPeriod === 'weekly' ? -8 : -6; // Last 8 weeks or 6 months
+    let sortedPeriods = Object.values(periods).sort((a, b) => new Date(a.period) - new Date(b.period));
     
-    return Object.values(periods)
-      .sort((a, b) => new Date(a.period) - new Date(b.period))
-      .slice(limit)
-      .map(period => ({
-        ...period,
-        net: period.total - period.directReimbursements
-      }));
+    // Apply limit only for recent data
+    if (chartPeriod === 'recent') {
+      sortedPeriods = sortedPeriods.slice(-8); // Last 8 weeks
+    }
+    
+    return sortedPeriods.map(period => ({
+      ...period,
+      net: period.total - period.directReimbursements
+    }));
   };
 
   // New function for grocery chart data
@@ -253,24 +310,31 @@ const ExpenseTracker = () => {
       expense.category === 'Groceries' || expense.category === 'Dining' || expense.category === 'Small Shop'
     );
     
+    // Filter by selected period if not 'recent'
+    const filteredGroceryExpenses = groceryChartPeriod === 'recent' ? groceryExpenses :
+      groceryExpenses.filter(expense => {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === groceryChartPeriod;
+      });
+    
     // Group grocery, dining, and small shop expenses by period
-    groceryExpenses.forEach(expense => {
+    filteredGroceryExpenses.forEach(expense => {
       const date = new Date(expense.date);
       let periodKey, periodLabel;
       
-      if (groceryChartPeriod === 'weekly') {
+      if (groceryChartPeriod === 'recent') {
+        // Weekly view for recent data
         const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
         periodKey = weekStart.toISOString().split('T')[0];
         periodLabel = weekStart.toLocaleDateString('en-GB', { 
           day: 'numeric', 
           month: 'short' 
         });
-      } else { // monthly
-        periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        periodLabel = date.toLocaleDateString('en-GB', { 
-          month: 'short', 
-          year: 'numeric' 
-        });
+      } else {
+        // Daily view for specific month
+        periodKey = date.toISOString().split('T')[0];
+        periodLabel = date.getDate().toString();
       }
       
       if (!periods[periodKey]) {
@@ -294,15 +358,19 @@ const ExpenseTracker = () => {
       periods[periodKey].total += expense.amount;
     });
     
-    const limit = groceryChartPeriod === 'weekly' ? -8 : -6; // Last 8 weeks or 6 months
+    let sortedPeriods = Object.values(periods).sort((a, b) => new Date(a.period) - new Date(b.period));
     
-    return Object.values(periods)
-      .sort((a, b) => new Date(a.period) - new Date(b.period))
-      .slice(limit);
+    // Apply limit only for recent data
+    if (groceryChartPeriod === 'recent') {
+      sortedPeriods = sortedPeriods.slice(-8); // Last 8 weeks
+    }
+    
+    return sortedPeriods;
   };
 
   const chartData = getFuelChartData();
   const groceryChartData = getGroceryChartData();
+  const availableMonths = getAvailableMonths();
 
   const showReimbursementFields = formData.category === 'Car - Fuel' || formData.category === 'Car - Maintenance';
 
@@ -322,7 +390,19 @@ const ExpenseTracker = () => {
         <div className="space-y-6 mb-8">
           {/* Overall Summary */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-3">Overall Summary</h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-800">Overall Summary</h2>
+              <select
+                value={summaryPeriod}
+                onChange={(e) => setSummaryPeriod(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="current">This Month</option>
+                {availableMonths.map(month => (
+                  <option key={month.value} value={month.value}>{month.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
                 <div className="flex items-center justify-between">
@@ -337,7 +417,10 @@ const ExpenseTracker = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">This Month (All)</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      {summaryPeriod === 'current' ? 'This Month (All)' : 
+                       `${availableMonths.find(m => m.value === summaryPeriod)?.label || summaryPeriod} (All)`}
+                    </p>
                     <p className="text-2xl font-bold text-gray-900">£{monthlyExpenses.toFixed(2)}</p>
                   </div>
                   <ShoppingCart className="text-orange-500" size={32} />
@@ -376,7 +459,10 @@ const ExpenseTracker = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">This Month</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      {summaryPeriod === 'current' ? 'This Month' : 
+                       `${availableMonths.find(m => m.value === summaryPeriod)?.label || summaryPeriod}`}
+                    </p>
                     <p className="text-2xl font-bold text-indigo-600">£{monthlyGroceryExpenses.toFixed(2)}</p>
                   </div>
                   <DollarSign className="text-indigo-500" size={32} />
@@ -443,9 +529,19 @@ const ExpenseTracker = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <BarChart3 className="text-red-600" size={24} />
-                  Weekly Fuel Spending
+                  {chartPeriod === 'recent' ? 'Recent Fuel Spending' : `Fuel Spending - ${availableMonths.find(m => m.value === chartPeriod)?.label || chartPeriod}`}
                 </h3>
                 <div className="flex gap-2">
+                  <select
+                    value={chartPeriod}
+                    onChange={(e) => setChartPeriod(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  >
+                    <option value="recent">Last 8 Weeks</option>
+                    {availableMonths.map(month => (
+                      <option key={month.value} value={month.value}>{month.label}</option>
+                    ))}
+                  </select>
                   <button
                     onClick={() => setShowChart(!showChart)}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -518,15 +614,25 @@ const ExpenseTracker = () => {
             </div>
           )}
 
-          {/* New Grocery Chart */}
+          {/* Grocery Chart */}
           {groceryChartData.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <BarChart3 className="text-green-600" size={24} />
-                  Weekly Grocery & Dining
+                  {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${availableMonths.find(m => m.value === groceryChartPeriod)?.label || groceryChartPeriod}`}
                 </h3>
                 <div className="flex gap-2">
+                  <select
+                    value={groceryChartPeriod}
+                    onChange={(e) => setGroceryChartPeriod(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="recent">Last 8 Weeks</option>
+                    {availableMonths.map(month => (
+                      <option key={month.value} value={month.value}>{month.label}</option>
+                    ))}
+                  </select>
                   <button
                     onClick={() => setShowGroceryChart(!showGroceryChart)}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

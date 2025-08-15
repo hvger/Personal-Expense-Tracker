@@ -580,10 +580,29 @@ const ExpenseTracker = () => {
 
           {/* Grocery Summary */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <ShoppingCart className="text-green-600" size={20} />
-              Grocery, Dining & Small Shop Summary
-            </h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <ShoppingCart className="text-green-600" size={20} />
+                Grocery, Dining & Small Shop Summary
+              </h2>
+              <div className="relative" ref={summaryCalendarRef}>
+                <button
+                  onClick={() => setShowSummaryCalendar(!showSummaryCalendar)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Calendar size={16} />
+                  {getPeriodDisplayName(summaryPeriod, availableMonths)}
+                </button>
+                {showSummaryCalendar && (
+                  <MonthlyCalendar
+                    value={summaryPeriod}
+                    onChange={setSummaryPeriod}
+                    availableMonths={availableMonths}
+                    onClose={() => setShowSummaryCalendar(false)}
+                  />
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
                 <div className="flex items-center justify-between">
@@ -621,10 +640,29 @@ const ExpenseTracker = () => {
 
           {/* Car Summary */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Car className="text-red-600" size={20} />
-              Car Expenses Summary
-            </h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Car className="text-red-600" size={20} />
+                Car Expenses Summary
+              </h2>
+              <div className="relative" ref={summaryCalendarRef}>
+                <button
+                  onClick={() => setShowSummaryCalendar(!showSummaryCalendar)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Calendar size={16} />
+                  {getPeriodDisplayName(summaryPeriod, availableMonths)}
+                </button>
+                {showSummaryCalendar && (
+                  <MonthlyCalendar
+                    value={summaryPeriod}
+                    onChange={setSummaryPeriod}
+                    availableMonths={availableMonths}
+                    onClose={() => setShowSummaryCalendar(false)}
+                  />
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
                 <div className="flex items-center justify-between">

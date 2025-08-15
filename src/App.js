@@ -131,12 +131,16 @@ const ExpenseTracker = () => {
   const [summaryPeriod, setSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
 
   // Calendar dropdown states
-  const [showSummaryCalendar, setShowSummaryCalendar] = useState(false);
+  const [showOverallSummaryCalendar, setShowOverallSummaryCalendar] = useState(false);
+  const [showGrocerySummaryCalendar, setShowGrocerySummaryCalendar] = useState(false);
+  const [showCarSummaryCalendar, setShowCarSummaryCalendar] = useState(false);
   const [showChartCalendar, setShowChartCalendar] = useState(false);
   const [showGroceryCalendar, setShowGroceryCalendar] = useState(false);
 
   // Refs for click outside detection
-  const summaryCalendarRef = useRef(null);
+  const overallSummaryCalendarRef = useRef(null);
+  const grocerySummaryCalendarRef = useRef(null);
+  const carSummaryCalendarRef = useRef(null);
   const chartCalendarRef = useRef(null);
   const groceryCalendarRef = useRef(null);
 
@@ -152,8 +156,14 @@ const ExpenseTracker = () => {
   // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (summaryCalendarRef.current && !summaryCalendarRef.current.contains(event.target)) {
-        setShowSummaryCalendar(false);
+      if (overallSummaryCalendarRef.current && !overallSummaryCalendarRef.current.contains(event.target)) {
+        setShowOverallSummaryCalendar(false);
+      }
+      if (grocerySummaryCalendarRef.current && !grocerySummaryCalendarRef.current.contains(event.target)) {
+        setShowGrocerySummaryCalendar(false);
+      }
+      if (carSummaryCalendarRef.current && !carSummaryCalendarRef.current.contains(event.target)) {
+        setShowCarSummaryCalendar(false);
       }
       if (chartCalendarRef.current && !chartCalendarRef.current.contains(event.target)) {
         setShowChartCalendar(false);
@@ -535,20 +545,20 @@ const ExpenseTracker = () => {
           <div>
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold text-gray-800">Overall Summary</h2>
-              <div className="relative" ref={summaryCalendarRef}>
+              <div className="relative" ref={overallSummaryCalendarRef}>
                 <button
-                  onClick={() => setShowSummaryCalendar(!showSummaryCalendar)}
+                  onClick={() => setShowOverallSummaryCalendar(!showOverallSummaryCalendar)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                 >
                   <Calendar size={16} />
                   {getPeriodDisplayName(summaryPeriod, availableMonths)}
                 </button>
-                {showSummaryCalendar && (
+                {showOverallSummaryCalendar && (
                   <MonthlyCalendar
                     value={summaryPeriod}
                     onChange={setSummaryPeriod}
                     availableMonths={availableMonths}
-                    onClose={() => setShowSummaryCalendar(false)}
+                    onClose={() => setShowOverallSummaryCalendar(false)}
                   />
                 )}
               </div>
@@ -585,20 +595,20 @@ const ExpenseTracker = () => {
                 <ShoppingCart className="text-green-600" size={20} />
                 Grocery, Dining & Small Shop Summary
               </h2>
-              <div className="relative" ref={summaryCalendarRef}>
+              <div className="relative" ref={grocerySummaryCalendarRef}>
                 <button
-                  onClick={() => setShowSummaryCalendar(!showSummaryCalendar)}
+                  onClick={() => setShowGrocerySummaryCalendar(!showGrocerySummaryCalendar)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                 >
                   <Calendar size={16} />
                   {getPeriodDisplayName(summaryPeriod, availableMonths)}
                 </button>
-                {showSummaryCalendar && (
+                {showGrocerySummaryCalendar && (
                   <MonthlyCalendar
                     value={summaryPeriod}
                     onChange={setSummaryPeriod}
                     availableMonths={availableMonths}
-                    onClose={() => setShowSummaryCalendar(false)}
+                    onClose={() => setShowGrocerySummaryCalendar(false)}
                   />
                 )}
               </div>
@@ -645,20 +655,20 @@ const ExpenseTracker = () => {
                 <Car className="text-red-600" size={20} />
                 Car Expenses Summary
               </h2>
-              <div className="relative" ref={summaryCalendarRef}>
+              <div className="relative" ref={carSummaryCalendarRef}>
                 <button
-                  onClick={() => setShowSummaryCalendar(!showSummaryCalendar)}
+                  onClick={() => setShowCarSummaryCalendar(!showCarSummaryCalendar)}
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                 >
                   <Calendar size={16} />
                   {getPeriodDisplayName(summaryPeriod, availableMonths)}
                 </button>
-                {showSummaryCalendar && (
+                {showCarSummaryCalendar && (
                   <MonthlyCalendar
                     value={summaryPeriod}
                     onChange={setSummaryPeriod}
                     availableMonths={availableMonths}
-                    onClose={() => setShowSummaryCalendar(false)}
+                    onClose={() => setShowCarSummaryCalendar(false)}
                   />
                 )}
               </div>

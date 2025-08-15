@@ -1,6 +1,110 @@
-import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { PlusCircle, Trash2, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+// Monthly Calendar Picker Component
+const MonthlyCalendar = ({ value, onChange, availableMonths, onClose }) => {
+  const currentDate = new Date();
+  const [viewYear, setViewYear] = useState(
+    value === 'current' 
+      ? currentDate.getFullYear() 
+      : parseInt(value.split('-')[0]) || currentDate.getFullYear()
+  );
+
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  const handleMonthSelect = (monthIndex) => {
+    const monthKey = `${viewYear}-${String(monthIndex + 1).padStart(2, '0')}`;
+    onChange(monthKey);
+    onClose();
+  };
+
+  const handleCurrentMonth = () => {
+    onChange('current');
+    onClose();
+  };
+
+  const isMonthAvailable = (monthIndex) => {
+    const monthKey = `${viewYear}-${String(monthIndex + 1).padStart(2, '0')}`;
+    return availableMonths.some(month => month.value === monthKey);
+  };
+
+  const isCurrentMonth = (monthIndex) => {
+    return value === 'current' && 
+           viewYear === currentDate.getFullYear() && 
+           monthIndex === currentDate.getMonth();
+  };
+
+  const isSelectedMonth = (monthIndex) => {
+    if (value === 'current') return false;
+    const monthKey = `${viewYear}-${String(monthIndex + 1).padStart(2, '0')}`;
+    return value === monthKey;
+  };
+
+  return (
+    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+      {/* Year Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => setViewYear(viewYear - 1)}
+          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <h3 className="text-lg font-semibold text-gray-800">{viewYear}</h3>
+        <button
+          onClick={() => setViewYear(viewYear + 1)}
+          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      {/* Current Month Button */}
+      <button
+        onClick={handleCurrentMonth}
+        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+          value === 'current'
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`}
+      >
+        Current Month
+      </button>
+
+      {/* Months Grid */}
+      <div className="grid grid-cols-3 gap-2">
+        {months.map((month, index) => {
+          const isAvailable = isMonthAvailable(index);
+          const isCurrent = isCurrentMonth(index);
+          const isSelected = isSelectedMonth(index);
+          
+          return (
+            <button
+              key={month}
+              onClick={() => isAvailable && handleMonthSelect(index)}
+              disabled={!isAvailable}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isSelected
+                  ? 'bg-blue-600 text-white'
+                  : isCurrent
+                  ? 'bg-green-100 text-green-800 border border-green-300'
+                  : isAvailable
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {month}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const ExpenseTracker = () => {
   const [expenses, setExpenses] = useState([]);
@@ -26,6 +130,16 @@ const ExpenseTracker = () => {
   // New state for summary period selection
   const [summaryPeriod, setSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
 
+  // Calendar dropdown states
+  const [showSummaryCalendar, setShowSummaryCalendar] = useState(false);
+  const [showChartCalendar, setShowChartCalendar] = useState(false);
+  const [showGroceryCalendar, setShowGroceryCalendar] = useState(false);
+
+  // Refs for click outside detection
+  const summaryCalendarRef = useRef(null);
+  const chartCalendarRef = useRef(null);
+  const groceryCalendarRef = useRef(null);
+
   const categories = [
     { value: 'Groceries', icon: ShoppingCart, color: 'bg-green-500' },
     { value: 'Dining', icon: Utensils, color: 'bg-blue-500' },
@@ -34,6 +148,26 @@ const ExpenseTracker = () => {
     { value: 'Car - Maintenance', icon: Car, color: 'bg-orange-500' },
     { value: 'Fuel Reimbursement', icon: RefreshCw, color: 'bg-purple-500' }
   ];
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (summaryCalendarRef.current && !summaryCalendarRef.current.contains(event.target)) {
+        setShowSummaryCalendar(false);
+      }
+      if (chartCalendarRef.current && !chartCalendarRef.current.contains(event.target)) {
+        setShowChartCalendar(false);
+      }
+      if (groceryCalendarRef.current && !groceryCalendarRef.current.contains(event.target)) {
+        setShowGroceryCalendar(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Load expenses from backend
   const loadExpenses = async () => {
@@ -204,6 +338,15 @@ const ExpenseTracker = () => {
           label: date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
         };
       });
+  };
+
+  // Helper function to get period display name
+  const getPeriodDisplayName = (period, availableMonths) => {
+    if (period === 'current') {
+      return 'This Month';
+    }
+    const month = availableMonths.find(m => m.value === period);
+    return month ? month.label : period;
   };
 
   const categoryTotals = categories.map(cat => {
@@ -392,16 +535,23 @@ const ExpenseTracker = () => {
           <div>
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold text-gray-800">Overall Summary</h2>
-              <select
-                value={summaryPeriod}
-                onChange={(e) => setSummaryPeriod(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              >
-                <option value="current">This Month</option>
-                {availableMonths.map(month => (
-                  <option key={month.value} value={month.value}>{month.label}</option>
-                ))}
-              </select>
+              <div className="relative" ref={summaryCalendarRef}>
+                <button
+                  onClick={() => setShowSummaryCalendar(!showSummaryCalendar)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Calendar size={16} />
+                  {getPeriodDisplayName(summaryPeriod, availableMonths)}
+                </button>
+                {showSummaryCalendar && (
+                  <MonthlyCalendar
+                    value={summaryPeriod}
+                    onChange={setSummaryPeriod}
+                    availableMonths={availableMonths}
+                    onClose={() => setShowSummaryCalendar(false)}
+                  />
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
@@ -418,8 +568,7 @@ const ExpenseTracker = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {summaryPeriod === 'current' ? 'This Month (All)' : 
-                       `${availableMonths.find(m => m.value === summaryPeriod)?.label || summaryPeriod} (All)`}
+                      {getPeriodDisplayName(summaryPeriod, availableMonths)} (All)
                     </p>
                     <p className="text-2xl font-bold text-gray-900">£{monthlyExpenses.toFixed(2)}</p>
                   </div>
@@ -460,8 +609,7 @@ const ExpenseTracker = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {summaryPeriod === 'current' ? 'This Month' : 
-                       `${availableMonths.find(m => m.value === summaryPeriod)?.label || summaryPeriod}`}
+                      {getPeriodDisplayName(summaryPeriod, availableMonths)}
                     </p>
                     <p className="text-2xl font-bold text-indigo-600">£{monthlyGroceryExpenses.toFixed(2)}</p>
                   </div>
@@ -529,19 +677,44 @@ const ExpenseTracker = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <BarChart3 className="text-red-600" size={24} />
-                  {chartPeriod === 'recent' ? 'Recent Fuel Spending' : `Fuel Spending - ${availableMonths.find(m => m.value === chartPeriod)?.label || chartPeriod}`}
+                  {chartPeriod === 'recent' ? 'Recent Fuel Spending' : `Fuel Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
                 </h3>
                 <div className="flex gap-2">
-                  <select
-                    value={chartPeriod}
-                    onChange={(e) => setChartPeriod(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  >
-                    <option value="recent">Last 8 Weeks</option>
-                    {availableMonths.map(month => (
-                      <option key={month.value} value={month.value}>{month.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={chartCalendarRef}>
+                    <button
+                      onClick={() => setShowChartCalendar(!showChartCalendar)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
+                    </button>
+                    {showChartCalendar && (
+                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                        <button
+                          onClick={() => {
+                            setChartPeriod('recent');
+                            setShowChartCalendar(false);
+                          }}
+                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            chartPeriod === 'recent'
+                              ? 'bg-red-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Last 8 Weeks
+                        </button>
+                        <MonthlyCalendar
+                          value={chartPeriod}
+                          onChange={(value) => {
+                            setChartPeriod(value);
+                            setShowChartCalendar(false);
+                          }}
+                          availableMonths={availableMonths}
+                          onClose={() => setShowChartCalendar(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => setShowChart(!showChart)}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -620,19 +793,44 @@ const ExpenseTracker = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <BarChart3 className="text-green-600" size={24} />
-                  {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${availableMonths.find(m => m.value === groceryChartPeriod)?.label || groceryChartPeriod}`}
+                  {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
                 </h3>
                 <div className="flex gap-2">
-                  <select
-                    value={groceryChartPeriod}
-                    onChange={(e) => setGroceryChartPeriod(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="recent">Last 8 Weeks</option>
-                    {availableMonths.map(month => (
-                      <option key={month.value} value={month.value}>{month.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={groceryCalendarRef}>
+                    <button
+                      onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
+                    </button>
+                    {showGroceryCalendar && (
+                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                        <button
+                          onClick={() => {
+                            setGroceryChartPeriod('recent');
+                            setShowGroceryCalendar(false);
+                          }}
+                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            groceryChartPeriod === 'recent'
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Last 8 Weeks
+                        </button>
+                        <MonthlyCalendar
+                          value={groceryChartPeriod}
+                          onChange={(value) => {
+                            setGroceryChartPeriod(value);
+                            setShowGroceryCalendar(false);
+                          }}
+                          availableMonths={availableMonths}
+                          onClose={() => setShowGroceryCalendar(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => setShowGroceryChart(!showGroceryChart)}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

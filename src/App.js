@@ -127,8 +127,9 @@ const ExpenseTracker = () => {
   const [groceryChartPeriod, setGroceryChartPeriod] = useState('recent'); // 'recent' or specific month
   const [groceryChartMode, setGroceryChartMode] = useState('breakdown'); // 'breakdown' or 'total'
   
-  // New state for summary period selection
-  const [summaryPeriod, setSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
+  // New state for summary period selection - separate for each section
+  const [grocerySummaryPeriod, setGrocerySummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
+  const [carSummaryPeriod, setCarSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
 
   // Calendar dropdown states
   const [showOverallSummaryCalendar, setShowOverallSummaryCalendar] = useState(false);
@@ -264,7 +265,7 @@ const ExpenseTracker = () => {
   }, 0) - totalReimbursements;
 
   const monthlyExpenses = expenses.filter(expense => {
-    if (summaryPeriod === 'current') {
+    if (grocerySummaryPeriod === 'current') {
       // Current month logic
       const expenseMonth = new Date(expense.date).getMonth();
       const currentMonth = new Date().getMonth();
@@ -274,14 +275,14 @@ const ExpenseTracker = () => {
     } else {
       // Selected month logic
       const expenseMonth = new Date(expense.date);
-      const [selectedYear, selectedMonth] = summaryPeriod.split('-');
+      const [selectedYear, selectedMonth] = grocerySummaryPeriod.split('-');
       const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-      return monthKey === summaryPeriod;
+      return monthKey === grocerySummaryPeriod;
     }
   }).reduce((sum, expense) => {
     return expense.category === 'Fuel Reimbursement' ? sum - expense.amount : sum + expense.amount;
   }, 0) - expenses.filter(expense => {
-    if (summaryPeriod === 'current') {
+    if (grocerySummaryPeriod === 'current') {
       const expenseMonth = new Date(expense.date).getMonth();
       const currentMonth = new Date().getMonth();
       const expenseYear = new Date(expense.date).getFullYear();
@@ -290,7 +291,7 @@ const ExpenseTracker = () => {
     } else {
       const expenseMonth = new Date(expense.date);
       const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-      return monthKey === summaryPeriod;
+      return monthKey === grocerySummaryPeriod;
     }
   }).reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
 
@@ -306,7 +307,7 @@ const ExpenseTracker = () => {
       const matchesCategory = expense.category === category;
       if (!matchesCategory) return false;
       
-      if (summaryPeriod === 'current') {
+      if (grocerySummaryPeriod === 'current') {
         const expenseMonth = new Date(expense.date).getMonth();
         const currentMonth = new Date().getMonth();
         const expenseYear = new Date(expense.date).getFullYear();
@@ -315,7 +316,7 @@ const ExpenseTracker = () => {
       } else {
         const expenseMonth = new Date(expense.date);
         const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-        return monthKey === summaryPeriod;
+        return monthKey === grocerySummaryPeriod;
       }
     }).reduce((sum, expense) => sum + expense.amount, 0);
   };
@@ -325,7 +326,7 @@ const ExpenseTracker = () => {
   const monthlySmallShop = getMonthlyGroceriesByCategory('Small Shop');
   
   const monthlyGroceryExpenses = groceryExpenses.filter(expense => {
-    if (summaryPeriod === 'current') {
+    if (grocerySummaryPeriod === 'current') {
       const expenseMonth = new Date(expense.date).getMonth();
       const currentMonth = new Date().getMonth();
       const expenseYear = new Date(expense.date).getFullYear();
@@ -334,7 +335,7 @@ const ExpenseTracker = () => {
     } else {
       const expenseMonth = new Date(expense.date);
       const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-      return monthKey === summaryPeriod;
+      return monthKey === grocerySummaryPeriod;
     }
   }).reduce((sum, expense) => sum + expense.amount, 0);
 
@@ -352,7 +353,7 @@ const ExpenseTracker = () => {
       const matchesCategory = expense.category === category;
       if (!matchesCategory) return false;
       
-      if (summaryPeriod === 'current') {
+      if (carSummaryPeriod === 'current') {
         const expenseMonth = new Date(expense.date).getMonth();
         const currentMonth = new Date().getMonth();
         const expenseYear = new Date(expense.date).getFullYear();
@@ -361,7 +362,7 @@ const ExpenseTracker = () => {
       } else {
         const expenseMonth = new Date(expense.date);
         const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-        return monthKey === summaryPeriod;
+        return monthKey === carSummaryPeriod;
       }
     }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
   };
@@ -374,7 +375,7 @@ const ExpenseTracker = () => {
     const matchesCategory = expense.category === 'Fuel Reimbursement';
     if (!matchesCategory) return false;
     
-    if (summaryPeriod === 'current') {
+    if (carSummaryPeriod === 'current') {
       const expenseMonth = new Date(expense.date).getMonth();
       const currentMonth = new Date().getMonth();
       const expenseYear = new Date(expense.date).getFullYear();
@@ -383,13 +384,13 @@ const ExpenseTracker = () => {
     } else {
       const expenseMonth = new Date(expense.date);
       const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-      return monthKey === summaryPeriod;
+      return monthKey === carSummaryPeriod;
     }
   }).reduce((sum, expense) => sum + expense.amount, 0);
 
   // Calculate monthly car reimbursements (both direct reimbursements and fuel reimbursements)
   const monthlyCarReimbursements = expenses.filter(expense => {
-    if (summaryPeriod === 'current') {
+    if (carSummaryPeriod === 'current') {
       const expenseMonth = new Date(expense.date).getMonth();
       const currentMonth = new Date().getMonth();
       const expenseYear = new Date(expense.date).getFullYear();
@@ -398,7 +399,7 @@ const ExpenseTracker = () => {
     } else {
       const expenseMonth = new Date(expense.date);
       const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
-      return monthKey === summaryPeriod;
+      return monthKey === carSummaryPeriod;
     }
   }).reduce((sum, expense) => {
     // Include fuel reimbursements and direct reimbursements from car expenses
@@ -639,12 +640,12 @@ const ExpenseTracker = () => {
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                 >
                   <Calendar size={16} />
-                  {getPeriodDisplayName(summaryPeriod, availableMonths)}
+                  {getPeriodDisplayName(grocerySummaryPeriod, availableMonths)}
                 </button>
                 {showGrocerySummaryCalendar && (
                   <MonthlyCalendar
-                    value={summaryPeriod}
-                    onChange={setSummaryPeriod}
+                    value={grocerySummaryPeriod}
+                    onChange={setGrocerySummaryPeriod}
                     availableMonths={availableMonths}
                     onClose={() => setShowGrocerySummaryCalendar(false)}
                   />
@@ -656,7 +657,7 @@ const ExpenseTracker = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {getPeriodDisplayName(summaryPeriod, availableMonths)} Total
+                      {getPeriodDisplayName(grocerySummaryPeriod, availableMonths)} Total
                     </p>
                     <p className="text-2xl font-bold text-indigo-600">£{monthlyGroceryExpenses.toFixed(2)}</p>
                   </div>
@@ -709,12 +710,12 @@ const ExpenseTracker = () => {
                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                 >
                   <Calendar size={16} />
-                  {getPeriodDisplayName(summaryPeriod, availableMonths)}
+                  {getPeriodDisplayName(carSummaryPeriod, availableMonths)}
                 </button>
                 {showCarSummaryCalendar && (
                   <MonthlyCalendar
-                    value={summaryPeriod}
-                    onChange={setSummaryPeriod}
+                    value={carSummaryPeriod}
+                    onChange={setCarSummaryPeriod}
                     availableMonths={availableMonths}
                     onClose={() => setShowCarSummaryCalendar(false)}
                   />
@@ -726,7 +727,7 @@ const ExpenseTracker = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {getPeriodDisplayName(summaryPeriod, availableMonths)} Net
+                      {getPeriodDisplayName(carSummaryPeriod, availableMonths)} Net
                     </p>
                     <p className="text-2xl font-bold text-purple-600">£{monthlyNetCarExpenses.toFixed(2)}</p>
                   </div>
@@ -758,7 +759,7 @@ const ExpenseTracker = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {getPeriodDisplayName(summaryPeriod, availableMonths)} Reimbursements
+                      {getPeriodDisplayName(carSummaryPeriod, availableMonths)} Reimbursements
                     </p>
                     <p className="text-2xl font-bold text-green-600">£{monthlyCarReimbursements.toFixed(2)}</p>
                   </div>

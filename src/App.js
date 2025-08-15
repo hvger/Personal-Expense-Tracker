@@ -149,7 +149,7 @@ const ExpenseTracker = () => {
     { value: 'Dining', icon: Utensils, color: 'bg-blue-500' },
     { value: 'Small Shop', icon: ShoppingCart, color: 'bg-teal-500' },
     { value: 'Car - Fuel', icon: Car, color: 'bg-red-500' },
-    { value: 'Car - Maintenance', icon: Car, color: 'bg-orange-500' },
+    { value: 'Car - Other', icon: Car, color: 'bg-orange-500' },
     { value: 'Fuel Reimbursement', icon: RefreshCw, color: 'bg-purple-500' }
   ];
 
@@ -300,12 +300,29 @@ const ExpenseTracker = () => {
   );
   const totalGrocerySpent = groceryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   
-  const weeklyGroceryExpenses = groceryExpenses.filter(expense => {
-    const expenseDate = new Date(expense.date);
-    const today = new Date();
-    const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
-    return expenseDate >= weekStart;
-  }).reduce((sum, expense) => sum + expense.amount, 0);
+  // Grocery-specific calculations by category
+  const getMonthlyGroceriesByCategory = (category) => {
+    return groceryExpenses.filter(expense => {
+      const matchesCategory = expense.category === category;
+      if (!matchesCategory) return false;
+      
+      if (summaryPeriod === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === summaryPeriod;
+      }
+    }).reduce((sum, expense) => sum + expense.amount, 0);
+  };
+
+  const monthlyGroceries = getMonthlyGroceriesByCategory('Groceries');
+  const monthlyDining = getMonthlyGroceriesByCategory('Dining');
+  const monthlySmallShop = getMonthlyGroceriesByCategory('Small Shop');
   
   const monthlyGroceryExpenses = groceryExpenses.filter(expense => {
     if (summaryPeriod === 'current') {
@@ -323,11 +340,78 @@ const ExpenseTracker = () => {
 
   // Car-specific calculations
   const carExpenses = expenses.filter(expense => 
-    expense.category === 'Car - Fuel' || expense.category === 'Car - Maintenance'
+    expense.category === 'Car - Fuel' || expense.category === 'Car - Other'
   );
   const totalCarSpent = carExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const totalCarReimbursements = carExpenses.reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
   const netCarExpenses = totalCarSpent - totalCarReimbursements - totalFuelReimbursements;
+
+  // Monthly car calculations by category
+  const getMonthlyCarByCategory = (category) => {
+    return expenses.filter(expense => {
+      const matchesCategory = expense.category === category;
+      if (!matchesCategory) return false;
+      
+      if (summaryPeriod === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === summaryPeriod;
+      }
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+  };
+
+  const monthlyCarFuel = getMonthlyCarByCategory('Car - Fuel');
+  const monthlyCarOther = getMonthlyCarByCategory('Car - Other');
+  
+  // Calculate monthly fuel reimbursements
+  const monthlyFuelReimbursements = expenses.filter(expense => {
+    const matchesCategory = expense.category === 'Fuel Reimbursement';
+    if (!matchesCategory) return false;
+    
+    if (summaryPeriod === 'current') {
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === summaryPeriod;
+    }
+  }).reduce((sum, expense) => sum + expense.amount, 0);
+
+  // Calculate monthly car reimbursements (both direct reimbursements and fuel reimbursements)
+  const monthlyCarReimbursements = expenses.filter(expense => {
+    if (summaryPeriod === 'current') {
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === summaryPeriod;
+    }
+  }).reduce((sum, expense) => {
+    // Include fuel reimbursements and direct reimbursements from car expenses
+    if (expense.category === 'Fuel Reimbursement') {
+      return sum + expense.amount;
+    }
+    if (expense.category === 'Car - Fuel' || expense.category === 'Car - Other') {
+      return sum + (expense.reimbursementAmount || 0);
+    }
+    return sum;
+  }, 0);
+
+  const monthlyNetCarExpenses = monthlyCarFuel + monthlyCarOther - monthlyFuelReimbursements;
 
   // Helper function to get available months from expenses
   const getAvailableMonths = () => {
@@ -525,7 +609,7 @@ const ExpenseTracker = () => {
   const groceryChartData = getGroceryChartData();
   const availableMonths = getAvailableMonths();
 
-  const showReimbursementFields = formData.category === 'Car - Fuel' || formData.category === 'Car - Maintenance';
+  const showReimbursementFields = formData.category === 'Car - Fuel' || formData.category === 'Car - Other';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -541,52 +625,6 @@ const ExpenseTracker = () => {
 
         {/* Summary Cards */}
         <div className="space-y-6 mb-8">
-          {/* Overall Summary */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-semibold text-gray-800">Overall Summary</h2>
-              <div className="relative" ref={overallSummaryCalendarRef}>
-                <button
-                  onClick={() => setShowOverallSummaryCalendar(!showOverallSummaryCalendar)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
-                >
-                  <Calendar size={16} />
-                  {getPeriodDisplayName(summaryPeriod, availableMonths)}
-                </button>
-                {showOverallSummaryCalendar && (
-                  <MonthlyCalendar
-                    value={summaryPeriod}
-                    onChange={setSummaryPeriod}
-                    availableMonths={availableMonths}
-                    onClose={() => setShowOverallSummaryCalendar(false)}
-                  />
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Net Expenses (All)</p>
-                    <p className="text-2xl font-bold text-purple-600">£{netExpenses.toFixed(2)}</p>
-                  </div>
-                  <PoundSterling className="text-purple-500" size={32} />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {getPeriodDisplayName(summaryPeriod, availableMonths)} (All)
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900">£{monthlyExpenses.toFixed(2)}</p>
-                  </div>
-                  <ShoppingCart className="text-orange-500" size={32} />
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Grocery Summary */}
           <div>
@@ -613,12 +651,24 @@ const ExpenseTracker = () => {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {getPeriodDisplayName(summaryPeriod, availableMonths)} Total
+                    </p>
+                    <p className="text-2xl font-bold text-indigo-600">£{monthlyGroceryExpenses.toFixed(2)}</p>
+                  </div>
+                  <DollarSign className="text-indigo-500" size={32} />
+                </div>
+              </div>
+
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Spent</p>
-                    <p className="text-2xl font-bold text-gray-900">£{totalGrocerySpent.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-600">Groceries</p>
+                    <p className="text-2xl font-bold text-green-600">£{monthlyGroceries.toFixed(2)}</p>
                   </div>
                   <ShoppingCart className="text-green-500" size={32} />
                 </div>
@@ -627,22 +677,20 @@ const ExpenseTracker = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">This Week</p>
-                    <p className="text-2xl font-bold text-blue-600">£{weeklyGroceryExpenses.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-600">Dining</p>
+                    <p className="text-2xl font-bold text-blue-600">£{monthlyDining.toFixed(2)}</p>
                   </div>
                   <Utensils className="text-blue-500" size={32} />
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {getPeriodDisplayName(summaryPeriod, availableMonths)}
-                    </p>
-                    <p className="text-2xl font-bold text-indigo-600">£{monthlyGroceryExpenses.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-600">Small Shop</p>
+                    <p className="text-2xl font-bold text-teal-600">£{monthlySmallShop.toFixed(2)}</p>
                   </div>
-                  <DollarSign className="text-indigo-500" size={32} />
+                  <ShoppingCart className="text-teal-500" size={32} />
                 </div>
               </div>
             </div>
@@ -674,11 +722,23 @@ const ExpenseTracker = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {getPeriodDisplayName(summaryPeriod, availableMonths)} Net
+                    </p>
+                    <p className="text-2xl font-bold text-purple-600">£{monthlyNetCarExpenses.toFixed(2)}</p>
+                  </div>
+                  <PoundSterling className="text-purple-500" size={32} />
+                </div>
+              </div>
+
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Car Spent</p>
-                    <p className="text-2xl font-bold text-gray-900">£{totalCarSpent.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-600">Car - Fuel</p>
+                    <p className="text-2xl font-bold text-red-600">£{monthlyCarFuel.toFixed(2)}</p>
                   </div>
                   <Car className="text-red-500" size={32} />
                 </div>
@@ -687,8 +747,8 @@ const ExpenseTracker = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Fuel Spent</p>
-                    <p className="text-2xl font-bold text-orange-600">£{totalFuelSpent.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-600">Car - Other</p>
+                    <p className="text-2xl font-bold text-orange-600">£{monthlyCarOther.toFixed(2)}</p>
                   </div>
                   <Car className="text-orange-500" size={32} />
                 </div>
@@ -697,20 +757,12 @@ const ExpenseTracker = () => {
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Reimbursements</p>
-                    <p className="text-2xl font-bold text-green-600">£{(totalCarReimbursements + totalFuelReimbursements).toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      {getPeriodDisplayName(summaryPeriod, availableMonths)} Reimbursements
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">£{monthlyCarReimbursements.toFixed(2)}</p>
                   </div>
                   <RefreshCw className="text-green-500" size={32} />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Net Car Expenses</p>
-                    <p className="text-2xl font-bold text-purple-600">£{netCarExpenses.toFixed(2)}</p>
-                  </div>
-                  <PoundSterling className="text-purple-500" size={32} />
                 </div>
               </div>
             </div>

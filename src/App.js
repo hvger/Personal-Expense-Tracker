@@ -459,15 +459,23 @@ const ExpenseTracker = () => {
     };
   }).filter(item => item.count > 0);
 
-  // Fuel chart data function
+  // Updated Fuel chart data function - now includes Car-Other data
   const getFuelChartData = () => {
     const periods = {};
     const fuelExpenses = expenses.filter(expense => expense.category === 'Car - Fuel');
+    const carOtherExpenses = expenses.filter(expense => expense.category === 'Car - Other');
     const fuelReimbursements = expenses.filter(expense => expense.category === 'Fuel Reimbursement');
     
     // Filter by selected period if not 'recent'
     const filteredFuelExpenses = chartPeriod === 'recent' ? fuelExpenses : 
       fuelExpenses.filter(expense => {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === chartPeriod;
+      });
+      
+    const filteredCarOtherExpenses = chartPeriod === 'recent' ? carOtherExpenses :
+      carOtherExpenses.filter(expense => {
         const expenseMonth = new Date(expense.date);
         const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
         return monthKey === chartPeriod;
@@ -500,8 +508,33 @@ const ExpenseTracker = () => {
       }
       
       if (!periods[periodKey]) {
-        periods[periodKey] = { period: periodKey, total: 0, directReimbursements: 0, periodLabel };
+        periods[periodKey] = { period: periodKey, fuel: 0, carOther: 0, total: 0, directReimbursements: 0, periodLabel };
       }
+      periods[periodKey].fuel += expense.amount;
+      periods[periodKey].total += expense.amount;
+    });
+    
+    // Group car-other expenses by period
+    filteredCarOtherExpenses.forEach(expense => {
+      const date = new Date(expense.date);
+      let periodKey, periodLabel;
+      
+      if (chartPeriod === 'recent') {
+        const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+        periodKey = weekStart.toISOString().split('T')[0];
+        periodLabel = weekStart.toLocaleDateString('en-GB', { 
+          day: 'numeric', 
+          month: 'short' 
+        });
+      } else {
+        periodKey = date.toISOString().split('T')[0];
+        periodLabel = date.getDate().toString();
+      }
+      
+      if (!periods[periodKey]) {
+        periods[periodKey] = { period: periodKey, fuel: 0, carOther: 0, total: 0, directReimbursements: 0, periodLabel };
+      }
+      periods[periodKey].carOther += expense.amount;
       periods[periodKey].total += expense.amount;
     });
     
@@ -523,7 +556,7 @@ const ExpenseTracker = () => {
       }
       
       if (!periods[periodKey]) {
-        periods[periodKey] = { period: periodKey, total: 0, directReimbursements: 0, periodLabel };
+        periods[periodKey] = { period: periodKey, fuel: 0, carOther: 0, total: 0, directReimbursements: 0, periodLabel };
       }
       periods[periodKey].directReimbursements += expense.amount;
     });
@@ -772,13 +805,13 @@ const ExpenseTracker = () => {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Fuel Chart */}
+          {/* Updated Fuel Chart - now includes Car-Other */}
           {chartData.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <BarChart3 className="text-red-600" size={24} />
-                  {chartPeriod === 'recent' ? 'Recent Fuel Spending' : `Fuel Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
+                  {chartPeriod === 'recent' ? 'Recent Car Spending' : `Car Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
                 </h3>
                 <div className="flex gap-2">
                   <div className="relative" ref={chartCalendarRef}>
@@ -832,7 +865,7 @@ const ExpenseTracker = () => {
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
-                        Total
+                        Breakdown
                       </button>
                       <button
                         onClick={() => setChartMode('net')}
@@ -864,9 +897,14 @@ const ExpenseTracker = () => {
                       {chartMode === 'total' ? (
                         <>
                           <Bar 
-                            dataKey="total" 
+                            dataKey="fuel" 
                             fill="#ef4444" 
-                            name="Total Spent"
+                            name="Car - Fuel"
+                          />
+                          <Bar 
+                            dataKey="carOther" 
+                            fill="#f97316" 
+                            name="Car - Other"
                           />
                           <Bar 
                             dataKey="directReimbursements" 

@@ -825,7 +825,13 @@ const ExpenseTracker = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  ['Car - Fuel', 'Car - Other', 'Fuel Reimbursement'], 
+                  carSummaryPeriod, 
+                  `${getPeriodDisplayName(carSummaryPeriod, availableMonths)} - All Car Expenses`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
@@ -837,7 +843,13 @@ const ExpenseTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Car - Fuel', 
+                  carSummaryPeriod, 
+                  `${getPeriodDisplayName(carSummaryPeriod, availableMonths)} - Car Fuel`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Car - Fuel</p>
@@ -847,7 +859,13 @@ const ExpenseTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Car - Other', 
+                  carSummaryPeriod, 
+                  `${getPeriodDisplayName(carSummaryPeriod, availableMonths)} - Car Other`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Car - Other</p>
@@ -857,7 +875,13 @@ const ExpenseTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Fuel Reimbursement', 
+                  carSummaryPeriod, 
+                  `${getPeriodDisplayName(carSummaryPeriod, availableMonths)} - Fuel Reimbursements`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">

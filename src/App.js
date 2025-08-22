@@ -130,6 +130,11 @@ const ExpenseTracker = () => {
   // New state for summary period selection - separate for each section
   const [grocerySummaryPeriod, setGrocerySummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
   const [carSummaryPeriod, setCarSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
+  
+  // New state for transaction modal
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [modalTransactions, setModalTransactions] = useState([]);
+  const [modalTitle, setModalTitle] = useState('');
 
   // Calendar dropdown states
   const [showOverallSummaryCalendar, setShowOverallSummaryCalendar] = useState(false);
@@ -444,6 +449,42 @@ const ExpenseTracker = () => {
     return month ? month.label : period;
   };
 
+  // Function to show transactions for a specific category and period
+  const showTransactionsForCategory = (category, period, title) => {
+    let filteredExpenses = expenses;
+    
+    // Filter by category if specified
+    if (category) {
+      if (Array.isArray(category)) {
+        filteredExpenses = filteredExpenses.filter(expense => category.includes(expense.category));
+      } else {
+        filteredExpenses = filteredExpenses.filter(expense => expense.category === category);
+      }
+    }
+    
+    // Filter by period
+    filteredExpenses = filteredExpenses.filter(expense => {
+      if (period === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === period;
+      }
+    });
+    
+    // Sort by date (most recent first)
+    filteredExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    setModalTransactions(filteredExpenses);
+    setModalTitle(title);
+    setShowTransactionModal(true);
+  };
+
   const categoryTotals = categories.map(cat => {
     const categoryExpenses = expenses.filter(expense => expense.category === cat.value);
     const total = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -686,7 +727,14 @@ const ExpenseTracker = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  ['Groceries', 'Dining', 'Small Shop'], 
+                  grocerySummaryPeriod, 
+                  `${getPeriodDisplayName(grocerySummaryPeriod, availableMonths)} - All Grocery & Dining`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
@@ -698,7 +746,14 @@ const ExpenseTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Groceries', 
+                  grocerySummaryPeriod, 
+                  `${getPeriodDisplayName(grocerySummaryPeriod, availableMonths)} - Groceries`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Groceries</p>
@@ -708,7 +763,14 @@ const ExpenseTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Dining', 
+                  grocerySummaryPeriod, 
+                  `${getPeriodDisplayName(grocerySummaryPeriod, availableMonths)} - Dining`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Dining</p>
@@ -718,7 +780,14 @@ const ExpenseTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500">
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Small Shop', 
+                  grocerySummaryPeriod, 
+                  `${getPeriodDisplayName(grocerySummaryPeriod, availableMonths)} - Small Shop`
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Small Shop</p>
@@ -1266,6 +1335,79 @@ const ExpenseTracker = () => {
             </div>
           </div>
         </div>
+        
+        {/* Transaction Modal */}
+        {showTransactionModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800">{modalTitle}</h2>
+                <button
+                  onClick={() => setShowTransactionModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                {modalTransactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No transactions found for this period.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {modalTransactions.map(expense => {
+                      const category = categories.find(cat => cat.value === expense.category);
+                      const IconComponent = category?.icon || DollarSign;
+                      const netAmount = expense.amount - (expense.reimbursementAmount || 0);
+                      const isReimbursement = expense.category === 'Fuel Reimbursement';
+                      
+                      return (
+                        <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${category?.color || 'bg-gray-500'}`}>
+                              <IconComponent className="text-white" size={16} />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{expense.description}</p>
+                              <p className="text-sm text-gray-500">{expense.category} • {expense.date}</p>
+                              {expense.reimbursementAmount > 0 && (
+                                <p className="text-sm text-green-600">Reimbursable: £{expense.reimbursementAmount.toFixed(2)}</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <span className={`text-lg font-semibold ${isReimbursement ? 'text-green-600' : 'text-red-600'}`}>
+                              {isReimbursement ? '+' : '-'}£{expense.amount.toFixed(2)}
+                            </span>
+                            {expense.reimbursementAmount > 0 && (
+                              <p className="text-sm font-medium text-purple-600">
+                                £{netAmount.toFixed(2)} net
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-600">
+                      Total ({modalTransactions.length} transactions):
+                    </span>
+                    <span className="text-lg font-bold text-gray-800">
+                      £{modalTransactions.reduce((sum, expense) => sum + expense.amount, 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

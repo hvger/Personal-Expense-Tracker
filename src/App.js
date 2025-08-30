@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Trash2, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Trash2, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Monthly Calendar Picker Component
@@ -130,6 +130,7 @@ const ExpenseTracker = () => {
   // New state for summary period selection - separate for each section
   const [grocerySummaryPeriod, setGrocerySummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
   const [carSummaryPeriod, setCarSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
+  const [housingSummaryPeriod, setHousingSummaryPeriod] = useState('current'); // Added missing state
   
   // New state for transaction modal
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -140,6 +141,7 @@ const ExpenseTracker = () => {
   const [showOverallSummaryCalendar, setShowOverallSummaryCalendar] = useState(false);
   const [showGrocerySummaryCalendar, setShowGrocerySummaryCalendar] = useState(false);
   const [showCarSummaryCalendar, setShowCarSummaryCalendar] = useState(false);
+  const [showHousingSummaryCalendar, setShowHousingSummaryCalendar] = useState(false); // Added missing state
   const [showChartCalendar, setShowChartCalendar] = useState(false);
   const [showGroceryCalendar, setShowGroceryCalendar] = useState(false);
 
@@ -147,16 +149,20 @@ const ExpenseTracker = () => {
   const overallSummaryCalendarRef = useRef(null);
   const grocerySummaryCalendarRef = useRef(null);
   const carSummaryCalendarRef = useRef(null);
+  const housingSummaryCalendarRef = useRef(null); // Added missing ref
   const chartCalendarRef = useRef(null);
   const groceryCalendarRef = useRef(null);
 
-  const categories = [
+   const categories = [
     { value: 'Groceries', icon: ShoppingCart, color: 'bg-green-500' },
     { value: 'Dining', icon: Utensils, color: 'bg-blue-500' },
     { value: 'Small Shop', icon: ShoppingCart, color: 'bg-teal-500' },
     { value: 'Car - Fuel', icon: Car, color: 'bg-red-500' },
     { value: 'Car - Other', icon: Car, color: 'bg-orange-500' },
-    { value: 'Fuel Reimbursement', icon: RefreshCw, color: 'bg-purple-500' }
+    { value: 'Fuel Reimbursement', icon: RefreshCw, color: 'bg-purple-500' },
+    { value: 'Rent and Council Tax', icon: House, color: 'bg-indigo-500' },
+    { value: 'Utilities', icon: Wrench, color: 'bg-yellow-500' },
+    { value: 'Internet', icon: Wifi, color: 'bg-pink-500' }
   ];
 
   // Click outside handler
@@ -170,6 +176,9 @@ const ExpenseTracker = () => {
       }
       if (carSummaryCalendarRef.current && !carSummaryCalendarRef.current.contains(event.target)) {
         setShowCarSummaryCalendar(false);
+      }
+      if (housingSummaryCalendarRef.current && !housingSummaryCalendarRef.current.contains(event.target)) {
+        setShowHousingSummaryCalendar(false);
       }
       if (chartCalendarRef.current && !chartCalendarRef.current.contains(event.target)) {
         setShowChartCalendar(false);
@@ -418,6 +427,50 @@ const ExpenseTracker = () => {
   }, 0);
 
   const monthlyNetCarExpenses = monthlyCarFuel + monthlyCarOther - monthlyFuelReimbursements;
+
+  // Housing-specific calculations by category - ADDED MISSING FUNCTIONS
+  const getMonthlyHousingByCategory = (category) => {
+    return expenses.filter(expense => {
+      const matchesCategory = expense.category === category;
+      if (!matchesCategory) return false;
+      
+      if (housingSummaryPeriod === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === housingSummaryPeriod;
+      }
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+  };
+
+  const monthlyRentCouncil = getMonthlyHousingByCategory('Rent and Council Tax');
+  const monthlyUtilities = getMonthlyHousingByCategory('Utilities');
+  const monthlyInternet = getMonthlyHousingByCategory('Internet');
+
+  // Calculate total monthly housing expenses
+  const monthlyHousingExpenses = expenses.filter(expense => {
+    const isHousingCategory = ['Rent and Council Tax', 'Utilities', 'Internet'].includes(expense.category);
+    if (!isHousingCategory) return false;
+    
+    if (housingSummaryPeriod === 'current') {
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === housingSummaryPeriod;
+    }
+  }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+
+  const monthlyNetTotal = monthlyHousingExpenses;
 
   // Helper function to get available months from expenses
   const getAvailableMonths = () => {
@@ -692,14 +745,104 @@ const ExpenseTracker = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-            <DollarSign className="text-blue-600" size={40} />
+            <PoundSterling className="text-blue-600" size={40} />
             Personal Expense Tracker
           </h1>
-          <p className="text-gray-600">Track your groceries, dining, and car expenses</p>
+          <p className="text-gray-600">Track your household and car expenses</p>
         </div>
 
         {/* Summary Cards */}
         <div className="space-y-6 mb-8">
+
+           {/* Housing & Utilities Summary */}
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <House className="text-indigo-600" size={20} />
+                Housing & Utilities Summary
+              </h2>
+              <div className="relative" ref={housingSummaryCalendarRef}>
+                <button
+                  onClick={() => setShowHousingSummaryCalendar(!showHousingSummaryCalendar)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Calendar size={16} />
+                  {getPeriodDisplayName(housingSummaryPeriod, availableMonths)}
+                </button>
+                {showHousingSummaryCalendar && (
+                  <MonthlyCalendar
+                    value={housingSummaryPeriod}
+                    onChange={setHousingSummaryPeriod}
+                    availableMonths={availableMonths}
+                    onClose={() => setShowHousingSummaryCalendar(false)}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-slate-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {getPeriodDisplayName(housingSummaryPeriod, availableMonths)} Net Total
+                    </p>
+                    <p className="text-2xl font-bold text-slate-600">£{monthlyNetTotal.toFixed(2)}</p>
+                  </div>
+                  <PoundSterling className="text-slate-500" size={32} />
+                </div>
+              </div>
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Rent and Council Tax', 
+                  housingSummaryPeriod, 
+                  `${getPeriodDisplayName(housingSummaryPeriod, availableMonths)} - Rent and Council Tax`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Rent & Council Tax</p>
+                    <p className="text-2xl font-bold text-indigo-600">£{monthlyRentCouncil.toFixed(2)}</p>
+                  </div>
+                  <House className="text-indigo-500" size={32} />
+                </div>
+              </div>
+
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Utilities', 
+                  housingSummaryPeriod, 
+                  `${getPeriodDisplayName(housingSummaryPeriod, availableMonths)} - Utilities`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Utilities</p>
+                    <p className="text-2xl font-bold text-yellow-600">£{monthlyUtilities.toFixed(2)}</p>
+                  </div>
+                  <Wrench className="text-yellow-500" size={32} />
+                </div>
+              </div>
+
+              <div 
+                className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Internet', 
+                  housingSummaryPeriod, 
+                  `${getPeriodDisplayName(housingSummaryPeriod, availableMonths)} - Internet`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Internet</p>
+                    <p className="text-2xl font-bold text-pink-600">£{monthlyInternet.toFixed(2)}</p>
+                  </div>
+                  <Wifi className="text-pink-500" size={32} />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Grocery Summary */}
           <div>
@@ -742,7 +885,7 @@ const ExpenseTracker = () => {
                     </p>
                     <p className="text-2xl font-bold text-indigo-600">£{monthlyGroceryExpenses.toFixed(2)}</p>
                   </div>
-                  <DollarSign className="text-indigo-500" size={32} />
+                  <PoundSterling className="text-indigo-500" size={32} />
                 </div>
               </div>
 

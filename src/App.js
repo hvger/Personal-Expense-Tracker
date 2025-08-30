@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Trash2, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+
 // Monthly Calendar Picker Component
 const MonthlyCalendar = ({ value, onChange, availableMonths, onClose }) => {
   const currentDate = new Date();
@@ -745,7 +746,7 @@ const ExpenseTracker = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-            <PoundSterling className="text-blue-600" size={40} />
+            <img src={process.env.PUBLIC_URL + "/MoneyIcon.png"} alt="MoneyIcon" className="w-10 h-10" />
             Personal Expense Tracker
           </h1>
           <p className="text-gray-600">Track your household and car expenses</p>
@@ -784,7 +785,7 @@ const ExpenseTracker = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      {getPeriodDisplayName(housingSummaryPeriod, availableMonths)} Net Total
+                      {getPeriodDisplayName(housingSummaryPeriod, availableMonths)} Total
                     </p>
                     <p className="text-2xl font-bold text-slate-600">£{monthlyNetTotal.toFixed(2)}</p>
                   </div>

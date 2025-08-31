@@ -841,7 +841,7 @@ const ExpenseTracker = () => {
             </div>
             
             {/* Cards with their respective calendars */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mx-auto items-stretch">
               {/* Current Month Total Card Section */}
               <div className="flex flex-col items-start">
                 {/* Calendar for current month */}

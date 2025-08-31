@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Trash2, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 
@@ -138,6 +138,10 @@ const ExpenseTracker = () => {
   const [modalTransactions, setModalTransactions] = useState([]);
   const [modalTitle, setModalTitle] = useState('');
 
+  const [totalSummaryPeriod, setTotalSummaryPeriod] = useState('current');
+  const [showTotalSummaryCalendar, setShowTotalSummaryCalendar] = useState(false);
+  const totalSummaryCalendarRef = useRef(null);
+
   // Calendar dropdown states
   const [showOverallSummaryCalendar, setShowOverallSummaryCalendar] = useState(false);
   const [showGrocerySummaryCalendar, setShowGrocerySummaryCalendar] = useState(false);
@@ -145,6 +149,17 @@ const ExpenseTracker = () => {
   const [showHousingSummaryCalendar, setShowHousingSummaryCalendar] = useState(false); // Added missing state
   const [showChartCalendar, setShowChartCalendar] = useState(false);
   const [showGroceryCalendar, setShowGroceryCalendar] = useState(false);
+
+  // Add these state variables to your component
+  const [lastMonthSummaryPeriod, setLastMonthSummaryPeriod] = useState(() => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+ const [showLastMonthSummaryCalendar, setShowLastMonthSummaryCalendar] = useState(false);
+ const lastMonthSummaryCalendarRef = useRef(null);
+  
 
   // Refs for click outside detection
   const overallSummaryCalendarRef = useRef(null);
@@ -269,10 +284,10 @@ const ExpenseTracker = () => {
   // Calculate totals with reimbursement logic
   const fuelExpenses = expenses.filter(expense => expense.category === 'Car - Fuel');
   const fuelReimbursements = expenses.filter(expense => expense.category === 'Fuel Reimbursement');
-  
+
   const totalFuelSpent = fuelExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const totalFuelReimbursements = fuelReimbursements.reduce((sum, expense) => sum + expense.amount, 0);
-  
+
   // Calculate NET expenses (total expenses minus all reimbursements)
   const totalReimbursements = expenses.reduce((sum, expense) => sum + (expense.reimbursementAmount || 0), 0);
   const netExpenses = expenses.reduce((sum, expense) => {
@@ -315,7 +330,7 @@ const ExpenseTracker = () => {
     expense.category === 'Groceries' || expense.category === 'Dining' || expense.category === 'Small Shop'
   );
   const totalGrocerySpent = groceryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  
+
   // Grocery-specific calculations by category
   const getMonthlyGroceriesByCategory = (category) => {
     return groceryExpenses.filter(expense => {
@@ -339,7 +354,7 @@ const ExpenseTracker = () => {
   const monthlyGroceries = getMonthlyGroceriesByCategory('Groceries');
   const monthlyDining = getMonthlyGroceriesByCategory('Dining');
   const monthlySmallShop = getMonthlyGroceriesByCategory('Small Shop');
-  
+
   const monthlyGroceryExpenses = groceryExpenses.filter(expense => {
     if (grocerySummaryPeriod === 'current') {
       const expenseMonth = new Date(expense.date).getMonth();
@@ -384,7 +399,7 @@ const ExpenseTracker = () => {
 
   const monthlyCarFuel = getMonthlyCarByCategory('Car - Fuel');
   const monthlyCarOther = getMonthlyCarByCategory('Car - Other');
-  
+
   // Calculate monthly fuel reimbursements
   const monthlyFuelReimbursements = expenses.filter(expense => {
     const matchesCategory = expense.category === 'Fuel Reimbursement';
@@ -429,7 +444,7 @@ const ExpenseTracker = () => {
 
   const monthlyNetCarExpenses = monthlyCarFuel + monthlyCarOther - monthlyFuelReimbursements;
 
-  // Housing-specific calculations by category - ADDED MISSING FUNCTIONS
+  // Housing-specific calculations by category - 
   const getMonthlyHousingByCategory = (category) => {
     return expenses.filter(expense => {
       const matchesCategory = expense.category === category;
@@ -493,6 +508,66 @@ const ExpenseTracker = () => {
         };
       });
   };
+
+  // Calculate current month total
+  const monthlyTotalSpent = monthlyGroceryExpenses + monthlyNetCarExpenses + monthlyHousingExpenses;
+
+  // NEW: Calculate comparison month total using existing logic
+  const getComparisonMonthTotal = () => {
+    // Get month name from the period
+    const [year, month] = lastMonthSummaryPeriod.split('-');
+    const comparisonDate = new Date(parseInt(year), parseInt(month) - 1);
+    const comparisonMonthName = comparisonDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    
+    // Use lastMonthSummaryPeriod directly in filtering logic instead of modifying state
+    
+    // Calculate grocery expenses for comparison month
+    const lastMonthGroceryExpenses = groceryExpenses.filter(expense => {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === lastMonthSummaryPeriod;
+    }).reduce((sum, expense) => sum + expense.amount, 0);
+    
+    // Calculate car expenses for comparison month
+    const lastMonthCarExpenses = expenses.filter(expense => {
+      const matchesCategory = ['Car - Fuel', 'Car - Other'].includes(expense.category);
+      if (!matchesCategory) return false;
+      
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === lastMonthSummaryPeriod;
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+    
+    // Calculate fuel reimbursements for comparison month
+    const lastMonthFuelReimbursements = expenses.filter(expense => {
+      const matchesCategory = expense.category === 'Fuel Reimbursement';
+      if (!matchesCategory) return false;
+      
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === lastMonthSummaryPeriod;
+    }).reduce((sum, expense) => sum + expense.amount, 0);
+    
+    const lastMonthNetCarExpenses = lastMonthCarExpenses - lastMonthFuelReimbursements;
+    
+    // Calculate housing expenses for comparison month
+    const lastMonthHousingExpenses = expenses.filter(expense => {
+      const isHousingCategory = ['Rent and Council Tax', 'Utilities', 'Internet'].includes(expense.category);
+      if (!isHousingCategory) return false;
+      
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === lastMonthSummaryPeriod;
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+    
+    return {
+      total: lastMonthGroceryExpenses + lastMonthNetCarExpenses + lastMonthHousingExpenses,
+      monthName: comparisonMonthName
+    };
+  };
+
+  const lastMonthData = getComparisonMonthTotal();
+  const lastMonthTotalSpent = lastMonthData.total;
 
   // Helper function to get period display name
   const getPeriodDisplayName = (period, availableMonths) => {
@@ -754,6 +829,105 @@ const ExpenseTracker = () => {
 
         {/* Summary Cards */}
         <div className="space-y-6 mb-8">
+          <div className="space-y-6 mb-8">
+          {/* Total Monthly Spending Summary */}
+          <div className="flex flex-col items-start mb-6">
+            {/* Title */}
+            <div className="w-full mb-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <CreditCard className="text-green-600" size={20} />
+                Monthly Spending Overview
+              </h2>
+            </div>
+            
+            {/* Cards with their respective calendars */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mx-auto">
+              {/* Current Month Total Card Section */}
+              <div className="flex flex-col items-start">
+                {/* Calendar for current month */}
+                <div className="w-full flex justify-start mb-3">
+                  <div className="relative" ref={totalSummaryCalendarRef}>
+                    <button
+                      onClick={() => setShowTotalSummaryCalendar(!showTotalSummaryCalendar)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      {getPeriodDisplayName(totalSummaryPeriod, availableMonths)}
+                    </button>
+                    {showTotalSummaryCalendar && (
+                      <MonthlyCalendar
+                        value={totalSummaryPeriod}
+                        onChange={setTotalSummaryPeriod}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowTotalSummaryCalendar(false)}
+                      />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Current Month Card */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 flex items-center justify-between w-full">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {getPeriodDisplayName(totalSummaryPeriod, availableMonths)} Total
+                    </p>
+                    <p className="text-2xl font-bold text-slate-600">£{monthlyTotalSpent.toFixed(2)}</p>
+                  </div>
+                  <CreditCard className="text-green-500" size={32} />
+                </div>
+              </div>
+              
+              {/* Comparison Month Total Card Section */}
+              <div className="flex flex-col items-end ">
+                {/* Calendar for comparison month */}
+                <div className="w-full flex justify-end mb-3">
+                  <div className="relative" ref={lastMonthSummaryCalendarRef}>
+                    <button
+                      onClick={() => setShowLastMonthSummaryCalendar(!showLastMonthSummaryCalendar)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      {lastMonthData.monthName}
+                    </button>
+                    {showLastMonthSummaryCalendar && (
+                      <MonthlyCalendar
+                        value={lastMonthSummaryPeriod}
+                        onChange={setLastMonthSummaryPeriod}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowLastMonthSummaryCalendar(false)}
+                      />
+                    )}
+                  </div>
+                </div>
+              
+              {/* Comparison Month Card */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 flex items-center justify-between w-full">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">
+                    {lastMonthData.monthName} Total
+                  </p>
+                  <p className="text-2xl font-bold text-slate-600">£{lastMonthTotalSpent.toFixed(2)}</p>
+                  {/* Optional: Show comparison with current month */}
+                  {monthlyTotalSpent !== 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {lastMonthTotalSpent > monthlyTotalSpent ? (
+                        <span className="text-red-500">
+                          +£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs current
+                        </span>
+                      ) : (
+                        <span className="text-green-500">
+                          -£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs current
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+                <Calendar className="text-blue-500 ml-2" size={32} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
            {/* Housing & Utilities Summary */}
           <div>

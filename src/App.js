@@ -841,7 +841,7 @@ const ExpenseTracker = () => {
             </div>
             
             {/* Cards with their respective calendars */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mx-auto items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mx-auto ">
               {/* Current Month Total Card Section */}
               <div className="flex flex-col items-start">
                 {/* Calendar for current month */}
@@ -866,7 +866,7 @@ const ExpenseTracker = () => {
                 </div>
                 
                 {/* Current Month Card */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 flex items-center justify-between w-full">
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 flex items-start justify-between w-full min-h-32">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
                       {getPeriodDisplayName(totalSummaryPeriod, availableMonths)} Total
@@ -901,7 +901,7 @@ const ExpenseTracker = () => {
                 </div>
               
               {/* Comparison Month Card */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 flex items-center justify-between w-full">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 flex items-start justify-between w-full min-h-32">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600">
                     {lastMonthData.monthName} Total

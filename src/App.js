@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie  } from 'recharts';
 
 
 // Monthly Calendar Picker Component
@@ -911,12 +911,12 @@ const ExpenseTracker = () => {
                   {monthlyTotalSpent !== 0 && (
                     <p className="text-xs text-gray-500 mt-1">
                       {lastMonthTotalSpent > monthlyTotalSpent ? (
-                        <span className="text-red-500">
-                          +£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs current
+                        <span className="text-green-500">
+                          -£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs current
                         </span>
                       ) : (
-                        <span className="text-green-500">
-                          -£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs current
+                        <span className="text-red-500">
+                          +£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs current
                         </span>
                       )}
                     </p>
@@ -1452,6 +1452,201 @@ const ExpenseTracker = () => {
                         />
                       )}
                     </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Donut Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Car Expenses Donut Chart */}
+          {chartData.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <PieChart className="text-red-600" size={24} />
+                  {chartPeriod === 'recent' ? 'Car Spending Distribution' : `Car Spending Distribution - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
+                </h3>
+                <div className="flex gap-2">
+                  <div className="relative" ref={chartCalendarRef}>
+                    <button
+                      onClick={() => setShowChartCalendar(!showChartCalendar)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
+                    </button>
+                    {showChartCalendar && (
+                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                        <button
+                          onClick={() => {
+                            setChartPeriod('recent');
+                            setShowChartCalendar(false);
+                          }}
+                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            chartPeriod === 'recent'
+                              ? 'bg-red-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Last 8 Weeks
+                        </button>
+                        <MonthlyCalendar
+                          value={chartPeriod}
+                          onChange={(value) => {
+                            setChartPeriod(value);
+                            setShowChartCalendar(false);
+                          }}
+                          availableMonths={availableMonths}
+                          onClose={() => setShowChartCalendar(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowChart(!showChart)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    {showChart ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+              
+              {showChart && (
+                <div className="h-80 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          {
+                            name: 'Car - Fuel',
+                            value: chartData.reduce((sum, item) => sum + item.fuel, 0),
+                            fill: '#ef4444'
+                          },
+                          {
+                            name: 'Car - Other',
+                            value: chartData.reduce((sum, item) => sum + item.carOther, 0),
+                            fill: '#f97316'
+                          },
+                          {
+                            name: 'Fuel Reimbursements',
+                            value: chartData.reduce((sum, item) => sum + item.directReimbursements, 0),
+                            fill: '#06c42f'
+                          }
+                        ].filter(item => item.value > 0)}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        innerRadius={40}
+                        fill="#8884d8"
+                        dataKey="value"
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`£${value.toFixed(2)}`]}
+                        labelStyle={{ color: '#374151' }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Grocery Expenses Donut Chart */}
+          {groceryChartData.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <PieChart className="text-green-600" size={24} />
+                  {groceryChartPeriod === 'recent' ? 'Grocery & Dining Distribution' : `Grocery & Dining Distribution - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
+                </h3>
+                <div className="flex gap-2">
+                  <div className="relative" ref={groceryCalendarRef}>
+                    <button
+                      onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar size={16} />
+                      {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
+                    </button>
+                    {showGroceryCalendar && (
+                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                        <button
+                          onClick={() => {
+                            setGroceryChartPeriod('recent');
+                            setShowGroceryCalendar(false);
+                          }}
+                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            groceryChartPeriod === 'recent'
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Last 8 Weeks
+                        </button>
+                        <MonthlyCalendar
+                          value={groceryChartPeriod}
+                          onChange={(value) => {
+                            setGroceryChartPeriod(value);
+                            setShowGroceryCalendar(false);
+                          }}
+                          availableMonths={availableMonths}
+                          onClose={() => setShowGroceryCalendar(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowGroceryChart(!showGroceryChart)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    {showGroceryChart ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+              
+              {showGroceryChart && (
+                <div className="h-80 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          {
+                            name: 'Groceries',
+                            value: groceryChartData.reduce((sum, item) => sum + item.groceries, 0),
+                            fill: '#10b981'
+                          },
+                          {
+                            name: 'Dining',
+                            value: groceryChartData.reduce((sum, item) => sum + item.dining, 0),
+                            fill: '#3b82f6'
+                          },
+                          {
+                            name: 'Small Shop',
+                            value: groceryChartData.reduce((sum, item) => sum + item.smallShop, 0),
+                            fill: '#14b8a6'
+                          }
+                        ].filter(item => item.value > 0)}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        innerRadius={40}
+                        fill="#8884d8"
+                        dataKey="value"
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`£${value.toFixed(2)}`]}
+                        labelStyle={{ color: '#374151' }}
+                      />
+                      <Legend />
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
               )}

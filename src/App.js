@@ -1557,7 +1557,7 @@ const ExpenseTracker = () => {
                         cx="45%"
                         cy="50%"
                         labelLine={false}
-                        label={({ value, percent }) => percent > 0.05 ? `£${value.toFixed(0)}\n${(percent * 100).toFixed(0)}%` : ''}
+                        label={({ percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
                         outerRadius={110}
                         innerRadius={55}
                         fill="#8884d8"
@@ -1664,7 +1664,7 @@ const ExpenseTracker = () => {
                         cx="45%"
                         cy="50%"
                         labelLine={false}
-                        label={({ value, percent }) => percent > 0.05 ? `£${value.toFixed(0)}\n${(percent * 100).toFixed(0)}%` : ''}
+                        label={({ percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
                         outerRadius={110}
                         innerRadius={55}
                         fill="#8884d8"

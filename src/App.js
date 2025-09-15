@@ -119,12 +119,14 @@ const ExpenseTracker = () => {
     reimbursementAmount: ''
   });
 
-  const [showChart, setShowChart] = useState(false);
+  const [showCarBarChart, setShowCarBarChart] = useState(false);
+  const [showCarPieChart, setShowCarPieChart] = useState(false);
   const [chartMode, setChartMode] = useState('total'); // 'total' or 'net'
   const [chartPeriod, setChartPeriod] = useState('recent'); // 'recent' or specific month like '2025-08'
   
   // New state for grocery chart
-  const [showGroceryChart, setShowGroceryChart] = useState(false);
+  const [showGroceryBarChart, setShowGroceryBarChart] = useState(false);
+  const [showGroceryPieChart, setShowGroceryPieChart] = useState(false);
   const [groceryChartPeriod, setGroceryChartPeriod] = useState('recent'); // 'recent' or specific month
   const [groceryChartMode, setGroceryChartMode] = useState('breakdown'); // 'breakdown' or 'total'
   
@@ -1217,84 +1219,84 @@ const ExpenseTracker = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Updated Fuel Chart - now includes Car-Other */}
-          {chartData.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <BarChart3 className="text-red-600" size={24} />
-                  {chartPeriod === 'recent' ? 'Recent Car Spending' : `Car Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
-                </h3>
-                <div className="flex gap-2">
-                  <div className="relative" ref={chartCalendarRef}>
-                    <button
-                      onClick={() => setShowChartCalendar(!showChartCalendar)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      <Calendar size={16} />
-                      {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
-                    </button>
-                    {showChartCalendar && (
-                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
-                        <button
-                          onClick={() => {
-                            setChartPeriod('recent');
-                            setShowChartCalendar(false);
-                          }}
-                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            chartPeriod === 'recent'
-                              ? 'bg-red-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          Last 8 Weeks
-                        </button>
-                        <MonthlyCalendar
-                          value={chartPeriod}
-                          onChange={(value) => {
-                            setChartPeriod(value);
-                            setShowChartCalendar(false);
-                          }}
-                          availableMonths={availableMonths}
-                          onClose={() => setShowChartCalendar(false)}
-                        />
-                      </div>
-                    )}
-                  </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <BarChart3 className="text-red-600" size={24} />
+                {chartPeriod === 'recent' ? 'Recent Car Spending' : `Car Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
+              </h3>
+              <div className="flex gap-2">
+                <div className="relative" ref={chartCalendarRef}>
                   <button
-                    onClick={() => setShowChart(!showChart)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    onClick={() => setShowChartCalendar(!showChartCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
-                    {showChart ? 'Hide' : 'Show'}
+                    <Calendar size={16} />
+                    {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
                   </button>
-                  {showChart && (
-                    <div className="flex gap-2">
+                  {showChartCalendar && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
                       <button
-                        onClick={() => setChartMode('total')}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          chartMode === 'total' 
-                            ? 'bg-red-600 text-white' 
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        onClick={() => {
+                          setChartPeriod('recent');
+                          setShowChartCalendar(false);
+                        }}
+                        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          chartPeriod === 'recent'
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
-                        Breakdown
+                        Last 8 Weeks
                       </button>
-                      <button
-                        onClick={() => setChartMode('net')}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          chartMode === 'net' 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        Net
-                      </button>
+                      <MonthlyCalendar
+                        value={chartPeriod}
+                        onChange={(value) => {
+                          setChartPeriod(value);
+                          setShowChartCalendar(false);
+                        }}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowChartCalendar(false)}
+                      />
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={() => setShowCarBarChart(!showCarBarChart)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  {showCarBarChart ? 'Hide' : 'Show'}
+                </button>
+                {showCarBarChart && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setChartMode('total')}
+                      className={`px-3 py-2 rounded-lg transition-colors ${
+                        chartMode === 'total' 
+                          ? 'bg-red-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Breakdown
+                    </button>
+                    <button
+                      onClick={() => setChartMode('net')}
+                      className={`px-3 py-2 rounded-lg transition-colors ${
+                        chartMode === 'net' 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Net
+                    </button>
+                  </div>
+                )}
               </div>
-              
-              {showChart && (
-                <div className="h-64">
+            </div>
+            
+            {showCarBarChart && (
+              <div className="h-64">
+                {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -1332,90 +1334,98 @@ const ExpenseTracker = () => {
                       )}
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500">
+                      <BarChart3 className="mx-auto mb-3 text-gray-400" size={48} />
+                      <p className="text-lg font-medium">No car expenses found</p>
+                      <p className="text-sm">No data available for the selected period</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Grocery Chart */}
-          {groceryChartData.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <BarChart3 className="text-green-600" size={24} />
-                  {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
-                </h3>
-                <div className="flex gap-2">
-                  <div className="relative" ref={groceryCalendarRef}>
-                    <button
-                      onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      <Calendar size={16} />
-                      {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
-                    </button>
-                    {showGroceryCalendar && (
-                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
-                        <button
-                          onClick={() => {
-                            setGroceryChartPeriod('recent');
-                            setShowGroceryCalendar(false);
-                          }}
-                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            groceryChartPeriod === 'recent'
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          Last 8 Weeks
-                        </button>
-                        <MonthlyCalendar
-                          value={groceryChartPeriod}
-                          onChange={(value) => {
-                            setGroceryChartPeriod(value);
-                            setShowGroceryCalendar(false);
-                          }}
-                          availableMonths={availableMonths}
-                          onClose={() => setShowGroceryCalendar(false)}
-                        />
-                      </div>
-                    )}
-                  </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <BarChart3 className="text-green-600" size={24} />
+                {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
+              </h3>
+              <div className="flex gap-2">
+                <div className="relative" ref={groceryCalendarRef}>
                   <button
-                    onClick={() => setShowGroceryChart(!showGroceryChart)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
-                    {showGroceryChart ? 'Hide' : 'Show'}
+                    <Calendar size={16} />
+                    {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
                   </button>
-                  {showGroceryChart && (
-                    <div className="flex gap-2">
+                  {showGroceryCalendar && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
                       <button
-                        onClick={() => setGroceryChartMode('breakdown')}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          groceryChartMode === 'breakdown' 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        onClick={() => {
+                          setGroceryChartPeriod('recent');
+                          setShowGroceryCalendar(false);
+                        }}
+                        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          groceryChartPeriod === 'recent'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
-                        Breakdown
+                        Last 8 Weeks
                       </button>
-                      <button
-                        onClick={() => setGroceryChartMode('total')}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          groceryChartMode === 'total' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                      >
-                        Total
-                      </button>
+                      <MonthlyCalendar
+                        value={groceryChartPeriod}
+                        onChange={(value) => {
+                          setGroceryChartPeriod(value);
+                          setShowGroceryCalendar(false);
+                        }}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowGroceryCalendar(false)}
+                      />
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={() => setShowGroceryBarChart(!showGroceryBarChart)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  {showGroceryBarChart ? 'Hide' : 'Show'}
+                </button>
+                {showGroceryBarChart && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setGroceryChartMode('breakdown')}
+                      className={`px-3 py-2 rounded-lg transition-colors ${
+                        groceryChartMode === 'breakdown' 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Breakdown
+                    </button>
+                    <button
+                      onClick={() => setGroceryChartMode('total')}
+                      className={`px-3 py-2 rounded-lg transition-colors ${
+                        groceryChartMode === 'total' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Total
+                    </button>
+                  </div>
+                )}
               </div>
-              
-              {showGroceryChart && (
-                <div className="h-64">
+            </div>
+            
+            {showGroceryBarChart && (
+              <div className="h-64">
+                {groceryChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={groceryChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -1453,69 +1463,77 @@ const ExpenseTracker = () => {
                       )}
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500">
+                      <BarChart3 className="mx-auto mb-3 text-gray-400" size={48} />
+                      <p className="text-lg font-medium">No grocery expenses found</p>
+                      <p className="text-sm">No data available for the selected period</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Donut Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Car Expenses Donut Chart */}
-          {chartData.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <PieChart className="text-red-600" size={24} />
-                  {chartPeriod === 'recent' ? 'Car Spending Distribution' : `Car Spending Distribution - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
-                </h3>
-                <div className="flex gap-2">
-                  <div className="relative" ref={chartCalendarRef}>
-                    <button
-                      onClick={() => setShowChartCalendar(!showChartCalendar)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      <Calendar size={16} />
-                      {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
-                    </button>
-                    {showChartCalendar && (
-                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
-                        <button
-                          onClick={() => {
-                            setChartPeriod('recent');
-                            setShowChartCalendar(false);
-                          }}
-                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            chartPeriod === 'recent'
-                              ? 'bg-red-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          Last 8 Weeks
-                        </button>
-                        <MonthlyCalendar
-                          value={chartPeriod}
-                          onChange={(value) => {
-                            setChartPeriod(value);
-                            setShowChartCalendar(false);
-                          }}
-                          availableMonths={availableMonths}
-                          onClose={() => setShowChartCalendar(false)}
-                        />
-                      </div>
-                    )}
-                  </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <PieChart className="text-red-600" size={24} />
+                {chartPeriod === 'recent' ? 'Car Spending Distribution' : `Car Spending Distribution - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
+              </h3>
+              <div className="flex gap-2">
+                <div className="relative" ref={chartCalendarRef}>
                   <button
-                    onClick={() => setShowChart(!showChart)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    onClick={() => setShowChartCalendar(!showChartCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
-                    {showChart ? 'Hide' : 'Show'}
+                    <Calendar size={16} />
+                    {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
                   </button>
+                  {showChartCalendar && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                      <button
+                        onClick={() => {
+                          setChartPeriod('recent');
+                          setShowChartCalendar(false);
+                        }}
+                        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          chartPeriod === 'recent'
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Last 8 Weeks
+                      </button>
+                      <MonthlyCalendar
+                        value={chartPeriod}
+                        onChange={(value) => {
+                          setChartPeriod(value);
+                          setShowChartCalendar(false);
+                        }}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowChartCalendar(false)}
+                      />
+                    </div>
+                  )}
                 </div>
+                <button
+                  onClick={() => setShowCarPieChart(!showCarPieChart)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  {showCarPieChart ? 'Hide' : 'Show'}
+                </button>
               </div>
-              
-              {showChart && (
-                <div className="h-80 flex items-center justify-center">
+            </div>
+            
+            {showCarPieChart && (
+              <div className="h-96 flex items-center justify-center">
+                {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -1536,82 +1554,93 @@ const ExpenseTracker = () => {
                             fill: '#06c42f'
                           }
                         ].filter(item => item.value > 0)}
-                        cx="50%"
+                        cx="45%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        innerRadius={40}
+                        label={({ value, percent }) => percent > 0.05 ? `£${value.toFixed(0)}` : ''}
+                        outerRadius={110}
+                        innerRadius={55}
                         fill="#8884d8"
                         dataKey="value"
                       />
-                      <Tooltip 
-                        formatter={(value) => [`£${value.toFixed(2)}`]}
-                        labelStyle={{ color: '#374151' }}
+                      <Legend 
+                        verticalAlign="top"
+                        align="right"
+                        layout="vertical"
+                        iconSize={12}
+                        wrapperStyle={{
+                          paddingLeft: '20px',
+                          fontSize: '14px'
+                        }}
                       />
-                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <PieChart className="mx-auto mb-3 text-gray-400" size={48} />
+                    <p className="text-lg font-medium">No car expenses found</p>
+                    <p className="text-sm">No data available for the selected period</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Grocery Expenses Donut Chart */}
-          {groceryChartData.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <PieChart className="text-green-600" size={24} />
-                  {groceryChartPeriod === 'recent' ? 'Grocery & Dining Distribution' : `Grocery & Dining Distribution - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
-                </h3>
-                <div className="flex gap-2">
-                  <div className="relative" ref={groceryCalendarRef}>
-                    <button
-                      onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      <Calendar size={16} />
-                      {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
-                    </button>
-                    {showGroceryCalendar && (
-                      <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
-                        <button
-                          onClick={() => {
-                            setGroceryChartPeriod('recent');
-                            setShowGroceryCalendar(false);
-                          }}
-                          className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            groceryChartPeriod === 'recent'
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          Last 8 Weeks
-                        </button>
-                        <MonthlyCalendar
-                          value={groceryChartPeriod}
-                          onChange={(value) => {
-                            setGroceryChartPeriod(value);
-                            setShowGroceryCalendar(false);
-                          }}
-                          availableMonths={availableMonths}
-                          onClose={() => setShowGroceryCalendar(false)}
-                        />
-                      </div>
-                    )}
-                  </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <PieChart className="text-green-600" size={24} />
+                {groceryChartPeriod === 'recent' ? 'Grocery & Dining Distribution' : `Grocery & Dining Distribution - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
+              </h3>
+              <div className="flex gap-2">
+                <div className="relative" ref={groceryCalendarRef}>
                   <button
-                    onClick={() => setShowGroceryChart(!showGroceryChart)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
-                    {showGroceryChart ? 'Hide' : 'Show'}
+                    <Calendar size={16} />
+                    {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
                   </button>
+                  {showGroceryCalendar && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                      <button
+                        onClick={() => {
+                          setGroceryChartPeriod('recent');
+                          setShowGroceryCalendar(false);
+                        }}
+                        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          groceryChartPeriod === 'recent'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Last 8 Weeks
+                      </button>
+                      <MonthlyCalendar
+                        value={groceryChartPeriod}
+                        onChange={(value) => {
+                          setGroceryChartPeriod(value);
+                          setShowGroceryCalendar(false);
+                        }}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowGroceryCalendar(false)}
+                      />
+                    </div>
+                  )}
                 </div>
+                <button
+                  onClick={() => setShowGroceryPieChart(!showGroceryPieChart)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  {showGroceryPieChart ? 'Hide' : 'Show'}
+                </button>
               </div>
-              
-              {showGroceryChart && (
-                <div className="h-80 flex items-center justify-center">
+            </div>
+            
+            {showGroceryPieChart && (
+              <div className="h-80 flex items-center justify-center">
+                {groceryChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -1648,10 +1677,16 @@ const ExpenseTracker = () => {
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <PieChart className="mx-auto mb-3 text-gray-400" size={48} />
+                    <p className="text-lg font-medium">No grocery expenses found</p>
+                    <p className="text-sm">No data available for the selected period</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

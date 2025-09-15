@@ -1541,58 +1541,61 @@ const ExpenseTracker = () => {
                           {
                             name: 'Car - Fuel',
                             value: chartData.reduce((sum, item) => sum + item.fuel, 0),
-                            fill: '#ef4444',
+                            fill: '#ef4444'
                           },
                           {
                             name: 'Car - Other',
                             value: chartData.reduce((sum, item) => sum + item.carOther, 0),
-                            fill: '#f97316',
+                            fill: '#f97316'
                           },
                           {
                             name: 'Fuel Reimbursements',
                             value: chartData.reduce((sum, item) => sum + item.directReimbursements, 0),
-                            fill: '#06c42f',
-                          },
+                            fill: '#06c42f'
+                          }
                         ].filter(item => item.value > 0)}
                         cx="45%"
                         cy="50%"
+                        labelLine={false}
+                        label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                          if (percent <= 0.05) return '';
+                          
+                          // Position for percentage (inside the colored section)
+                          const innerLabelRadius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const innerX = cx + innerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const innerY = cy + innerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          // Position for £ amount (outside the donut)
+                          const outerLabelRadius = outerRadius + 20;
+                          const outerX = cx + outerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const outerY = cy + outerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          return (
+                            <g>
+                              {/* Percentage inside */}
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+                                {(percent * 100).toFixed(0)}%
+                              </text>
+                              {/* £ amount outside */}
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                                £{value.toFixed(0)}
+                              </text>
+                            </g>
+                          );
+                        }}
                         outerRadius={110}
                         innerRadius={55}
                         fill="#8884d8"
                         dataKey="value"
-                        labelLine={false}
-                        label={({
-                          cx, cy, midAngle, innerRadius, outerRadius, percent, value
-                        }) => {
-                          const RADIAN = Math.PI / 180;
-                          const radius = innerRadius + (outerRadius - innerRadius) / 2;
-                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                          return percent > 0.05 ? (
-                            <text
-                              x={x}
-                              y={y}
-                              fill="#fff"
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fontSize={14}
-                              fontWeight="bold"
-                            >
-                              <tspan x={x} dy="0">{`${(percent * 100).toFixed(0)}%`}</tspan>
-                              <tspan x={x} dy="1.2em">{value}</tspan>
-                            </text>
-                          ) : null;
-                        }}
                       />
-                      <Legend
+                      <Legend 
                         verticalAlign="top"
                         align="right"
                         layout="vertical"
                         iconSize={12}
                         wrapperStyle={{
                           paddingLeft: '20px',
-                          fontSize: '14px',
+                          fontSize: '14px'
                         }}
                       />
                     </PieChart>
@@ -1613,9 +1616,7 @@ const ExpenseTracker = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <PieChart className="text-green-600" size={24} />
-                {groceryChartPeriod === 'recent'
-                  ? 'Grocery & Dining Distribution'
-                  : `Grocery & Dining Distribution - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
+                {groceryChartPeriod === 'recent' ? 'Grocery & Dining Distribution' : `Grocery & Dining Distribution - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
               </h3>
               <div className="flex gap-2">
                 <div className="relative" ref={groceryCalendarRef}>
@@ -1624,9 +1625,7 @@ const ExpenseTracker = () => {
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <Calendar size={16} />
-                    {groceryChartPeriod === 'recent'
-                      ? 'Last 8 Weeks'
-                      : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
+                    {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
                   </button>
                   {showGroceryCalendar && (
                     <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
@@ -1663,7 +1662,7 @@ const ExpenseTracker = () => {
                 </button>
               </div>
             </div>
-
+            
             {showGroceryPieChart && (
               <div className="h-96 flex items-center justify-center">
                 {groceryChartData.length > 0 ? (
@@ -1674,58 +1673,61 @@ const ExpenseTracker = () => {
                           {
                             name: 'Groceries',
                             value: groceryChartData.reduce((sum, item) => sum + item.groceries, 0),
-                            fill: '#10b981',
+                            fill: '#10b981'
                           },
                           {
                             name: 'Dining',
                             value: groceryChartData.reduce((sum, item) => sum + item.dining, 0),
-                            fill: '#3b82f6',
+                            fill: '#3b82f6'
                           },
                           {
                             name: 'Small Shop',
                             value: groceryChartData.reduce((sum, item) => sum + item.smallShop, 0),
-                            fill: '#14b8a6',
-                          },
+                            fill: '#14b8a6'
+                          }
                         ].filter(item => item.value > 0)}
                         cx="45%"
                         cy="50%"
+                        labelLine={false}
+                        label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                          if (percent <= 0.05) return '';
+                          
+                          // Position for percentage (inside the colored section)
+                          const innerLabelRadius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const innerX = cx + innerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const innerY = cy + innerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          // Position for £ amount (outside the donut)
+                          const outerLabelRadius = outerRadius + 20;
+                          const outerX = cx + outerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const outerY = cy + outerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          return (
+                            <g>
+                              {/* Percentage inside */}
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+                                {(percent * 100).toFixed(0)}%
+                              </text>
+                              {/* £ amount outside */}
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                                £{value.toFixed(0)}
+                              </text>
+                            </g>
+                          );
+                        }}
                         outerRadius={110}
                         innerRadius={55}
                         fill="#8884d8"
                         dataKey="value"
-                        labelLine={false}
-                        label={({
-                          cx, cy, midAngle, innerRadius, outerRadius, percent, value
-                        }) => {
-                          const RADIAN = Math.PI / 180;
-                          const radius = innerRadius + (outerRadius - innerRadius) / 2;
-                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                          return percent > 0.05 ? (
-                            <text
-                              x={x}
-                              y={y}
-                              fill="#fff"
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fontSize={14}
-                              fontWeight="bold"
-                            >
-                              <tspan x={x} dy="0">{`${(percent * 100).toFixed(0)}%`}</tspan>
-                              <tspan x={x} dy="1.2em">{value}</tspan>
-                            </text>
-                          ) : null;
-                        }}
                       />
-                      <Legend
+                      <Legend 
                         verticalAlign="top"
                         align="right"
                         layout="vertical"
                         iconSize={12}
                         wrapperStyle={{
                           paddingLeft: '20px',
-                          fontSize: '14px',
+                          fontSize: '14px'
                         }}
                       />
                     </PieChart>
@@ -1740,7 +1742,6 @@ const ExpenseTracker = () => {
               </div>
             )}
           </div>
-
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

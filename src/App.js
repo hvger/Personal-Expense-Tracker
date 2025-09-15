@@ -1557,7 +1557,7 @@ const ExpenseTracker = () => {
                         cx="45%"
                         cy="50%"
                         labelLine={false}
-                        label={({ value, percent }) => percent > 0.05 ? `£${value.toFixed(0)}` : ''}
+                        label={({ value, percent }) => percent > 0.05 ? `£${value.toFixed(0)}\n${(percent * 100).toFixed(0)}%` : ''}
                         outerRadius={110}
                         innerRadius={55}
                         fill="#8884d8"
@@ -1639,7 +1639,7 @@ const ExpenseTracker = () => {
             </div>
             
             {showGroceryPieChart && (
-              <div className="h-80 flex items-center justify-center">
+              <div className="h-96 flex items-center justify-center">
                 {groceryChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -1661,20 +1661,25 @@ const ExpenseTracker = () => {
                             fill: '#14b8a6'
                           }
                         ].filter(item => item.value > 0)}
-                        cx="50%"
+                        cx="45%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        innerRadius={40}
+                        label={({ value, percent }) => percent > 0.05 ? `£${value.toFixed(0)}\n${(percent * 100).toFixed(0)}%` : ''}
+                        outerRadius={110}
+                        innerRadius={55}
                         fill="#8884d8"
                         dataKey="value"
                       />
-                      <Tooltip 
-                        formatter={(value) => [`£${value.toFixed(2)}`]}
-                        labelStyle={{ color: '#374151' }}
+                      <Legend 
+                        verticalAlign="top"
+                        align="right"
+                        layout="vertical"
+                        iconSize={12}
+                        wrapperStyle={{
+                          paddingLeft: '20px',
+                          fontSize: '14px'
+                        }}
                       />
-                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (

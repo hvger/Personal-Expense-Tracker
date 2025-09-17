@@ -119,6 +119,18 @@ const ExpenseTracker = () => {
     reimbursementAmount: ''
   });
 
+  // Separate periods for donut charts
+  const [donutCarPeriod, setDonutCarPeriod] = useState('recent');
+  const [donutGroceryPeriod, setDonutGroceryPeriod] = useState('recent');
+
+  // Separate calendar visibility states for donut charts
+  const [showDonutCarCalendar, setShowDonutCarCalendar] = useState(false);
+  const [showDonutGroceryCalendar, setShowDonutGroceryCalendar] = useState(false);
+
+  // Separate refs for donut chart calendars
+  const donutCarCalendarRef = useRef(null);
+  const donutGroceryCalendarRef = useRef(null);
+  
   const [showCarBarChart, setShowCarBarChart] = useState(false);
   const [showCarPieChart, setShowCarPieChart] = useState(false);
   const [chartMode, setChartMode] = useState('total'); // 'total' or 'net'
@@ -659,6 +671,62 @@ const ExpenseTracker = () => {
   const lastMonthTotalSpent = lastMonthData.total;
 
   const [showMonthlySummaryChart, setShowMonthlySummaryChart] = useState(true);
+  
+
+  const getDonutChartData = (period, chartType) => {
+    if (chartType === 'car') {
+      return expenses.filter(expense => {
+        const matchesCategory = ['Car - Fuel', 'Car - Other', 'Fuel Reimbursement'].includes(expense.category);
+        if (!matchesCategory) return false;
+        
+        if (period === 'recent') {
+          // Last 8 weeks logic
+          const eightWeeksAgo = new Date();
+          eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+          return new Date(expense.date) >= eightWeeksAgo;
+        } else {
+          // Monthly logic
+          const expenseMonth = new Date(expense.date);
+          const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+          return monthKey === period;
+        }
+      });
+    } else if (chartType === 'grocery') {
+      return expenses.filter(expense => {
+        const matchesCategory = ['Groceries', 'Dining', 'Small Shop'].includes(expense.category);
+        if (!matchesCategory) return false;
+        
+        if (period === 'recent') {
+          // Last 8 weeks logic
+          const eightWeeksAgo = new Date();
+          eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+          return new Date(expense.date) >= eightWeeksAgo;
+        } else {
+          // Monthly logic
+          const expenseMonth = new Date(expense.date);
+          const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+          return monthKey === period;
+        }
+      });
+    }
+    return [];
+  };
+
+  // Donut Chart Data - Car
+  const donutCarData = getDonutChartData(donutCarPeriod, 'car');
+  const donutCarTotals = {
+    fuel: donutCarData.filter(e => e.category === 'Car - Fuel').reduce((sum, e) => sum + e.amount, 0),
+    carOther: donutCarData.filter(e => e.category === 'Car - Other').reduce((sum, e) => sum + e.amount, 0),
+    directReimbursements: donutCarData.filter(e => e.category === 'Fuel Reimbursement').reduce((sum, e) => sum + e.amount, 0)
+  };
+
+  // Donut Chart Data - Grocery
+  const donutGroceryData = getDonutChartData(donutGroceryPeriod, 'grocery');
+  const donutGroceryTotals = {
+    groceries: donutGroceryData.filter(e => e.category === 'Groceries').reduce((sum, e) => sum + e.amount, 0),
+    dining: donutGroceryData.filter(e => e.category === 'Dining').reduce((sum, e) => sum + e.amount, 0),
+    smallShop: donutGroceryData.filter(e => e.category === 'Small Shop').reduce((sum, e) => sum + e.amount, 0)
+  };
 
   // Helper function to get period display name
   const getPeriodDisplayName = (period, availableMonths) => {
@@ -1573,7 +1641,7 @@ const ExpenseTracker = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <PieChart className="text-blue-600" size={24} />
-                Monthly Expense Breakdown - {getPeriodDisplayName(totalSummaryPeriod, availableMonths)}
+                Monthly Expense Breakdown 
               </h3>
               <div className="flex gap-2">
                 <div className="relative" ref={totalSummaryCalendarRef}>
@@ -1690,23 +1758,23 @@ const ExpenseTracker = () => {
                 {chartPeriod === 'recent' ? 'Car Spending Distribution' : `Car Spending Distribution - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
               </h3>
               <div className="flex gap-2">
-                <div className="relative" ref={chartCalendarRef}>
+                <div className="relative" ref={donutCarCalendarRef}>
                   <button
-                    onClick={() => setShowChartCalendar(!showChartCalendar)}
+                    onClick={() => setShowDonutCarCalendar(!showDonutCarCalendar)}
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <Calendar size={16} />
-                    {chartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(chartPeriod, availableMonths)}
+                    {donutCarPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(donutCarPeriod, availableMonths)}
                   </button>
-                  {showChartCalendar && (
+                  {showDonutCarCalendar && (
                     <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
                       <button
                         onClick={() => {
-                          setChartPeriod('recent');
-                          setShowChartCalendar(false);
+                          setDonutCarPeriod('recent');
+                          setShowDonutCarCalendar(false);
                         }}
                         className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          chartPeriod === 'recent'
+                          donutCarPeriod === 'recent'
                             ? 'bg-red-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
@@ -1714,13 +1782,13 @@ const ExpenseTracker = () => {
                         Last 8 Weeks
                       </button>
                       <MonthlyCalendar
-                        value={chartPeriod}
+                        value={donutCarPeriod}
                         onChange={(value) => {
-                          setChartPeriod(value);
-                          setShowChartCalendar(false);
+                          setDonutCarPeriod(value);
+                          setShowDonutCarCalendar(false);
                         }}
                         availableMonths={availableMonths}
-                        onClose={() => setShowChartCalendar(false)}
+                        onClose={() => setShowDonutCarCalendar(false)}
                       />
                     </div>
                   )}
@@ -1736,24 +1804,24 @@ const ExpenseTracker = () => {
             
             {showCarPieChart && (
               <div className="h-96 flex items-center justify-center">
-                {chartData.length > 0 ? (
+                {(donutCarTotals.fuel > 0 || donutCarTotals.carOther > 0 || donutCarTotals.directReimbursements > 0) ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={[
                           {
                             name: 'Car - Fuel',
-                            value: chartData.reduce((sum, item) => sum + item.fuel, 0),
+                            value: donutCarTotals.fuel,
                             fill: '#ef4444'
                           },
                           {
                             name: 'Car - Other',
-                            value: chartData.reduce((sum, item) => sum + item.carOther, 0),
+                            value: donutCarTotals.carOther,
                             fill: '#f97316'
                           },
                           {
                             name: 'Fuel Reimbursements',
-                            value: chartData.reduce((sum, item) => sum + item.directReimbursements, 0),
+                            value: donutCarTotals.directReimbursements,
                             fill: '#06c42f'
                           }
                         ].filter(item => item.value > 0)}
@@ -1822,23 +1890,23 @@ const ExpenseTracker = () => {
                 {groceryChartPeriod === 'recent' ? 'Grocery & Dining Distribution' : `Grocery & Dining Distribution - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
               </h3>
               <div className="flex gap-2">
-                <div className="relative" ref={groceryCalendarRef}>
+                <div className="relative" ref={donutGroceryCalendarRef}>
                   <button
-                    onClick={() => setShowGroceryCalendar(!showGroceryCalendar)}
+                    onClick={() => setShowDonutGroceryCalendar(!showDonutGroceryCalendar)}
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <Calendar size={16} />
-                    {groceryChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(groceryChartPeriod, availableMonths)}
+                    {donutGroceryPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(donutGroceryPeriod, availableMonths)}
                   </button>
-                  {showGroceryCalendar && (
+                  {showDonutGroceryCalendar && (
                     <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
                       <button
                         onClick={() => {
-                          setGroceryChartPeriod('recent');
-                          setShowGroceryCalendar(false);
+                          setDonutGroceryPeriod('recent');
+                          setShowDonutGroceryCalendar(false);
                         }}
                         className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          groceryChartPeriod === 'recent'
+                          donutGroceryPeriod === 'recent'
                             ? 'bg-green-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
@@ -1846,13 +1914,13 @@ const ExpenseTracker = () => {
                         Last 8 Weeks
                       </button>
                       <MonthlyCalendar
-                        value={groceryChartPeriod}
+                        value={donutGroceryPeriod}
                         onChange={(value) => {
-                          setGroceryChartPeriod(value);
-                          setShowGroceryCalendar(false);
+                          setDonutGroceryPeriod(value);
+                          setShowDonutGroceryCalendar(false);
                         }}
                         availableMonths={availableMonths}
-                        onClose={() => setShowGroceryCalendar(false)}
+                        onClose={() => setShowDonutGroceryCalendar(false)}
                       />
                     </div>
                   )}
@@ -1868,24 +1936,24 @@ const ExpenseTracker = () => {
             
             {showGroceryPieChart && (
               <div className="h-96 flex items-center justify-center">
-                {groceryChartData.length > 0 ? (
+                {(donutGroceryTotals.groceries > 0 || donutGroceryTotals.dining > 0 || donutGroceryTotals.smallShop > 0) ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={[
                           {
                             name: 'Groceries',
-                            value: groceryChartData.reduce((sum, item) => sum + item.groceries, 0),
+                            value: donutGroceryTotals.groceries,
                             fill: '#10b981'
                           },
                           {
                             name: 'Dining',
-                            value: groceryChartData.reduce((sum, item) => sum + item.dining, 0),
+                            value: donutGroceryTotals.dining,
                             fill: '#3b82f6'
                           },
                           {
                             name: 'Small Shop',
-                            value: groceryChartData.reduce((sum, item) => sum + item.smallShop, 0),
+                            value: donutGroceryTotals.smallShop,
                             fill: '#14b8a6'
                           }
                         ].filter(item => item.value > 0)}

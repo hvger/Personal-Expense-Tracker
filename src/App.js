@@ -513,8 +513,7 @@ const ExpenseTracker = () => {
       });
   };
 
-  // Calculate current month total
-  const monthlyTotalSpent = monthlyGroceryExpenses + monthlyNetCarExpenses + monthlyHousingExpenses;
+
 
   // NEW: Calculate comparison month total using existing logic
   const getComparisonMonthTotal = () => {
@@ -569,9 +568,97 @@ const ExpenseTracker = () => {
       monthName: comparisonMonthName
     };
   };
+  
+  // Calculate monthly totals using totalSummaryPeriod for the main summary
+  const getMonthlyTotalsByPeriod = (period) => {
+    // Housing expenses for the selected period
+    const housingExpensesForPeriod = expenses.filter(expense => {
+      const isHousingCategory = ['Rent and Council Tax', 'Utilities', 'Internet'].includes(expense.category);
+      if (!isHousingCategory) return false;
+      
+      if (period === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === period;
+      }
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
 
+    // Grocery expenses for the selected period
+    const groceryExpensesForPeriod = groceryExpenses.filter(expense => {
+      if (period === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === period;
+      }
+    }).reduce((sum, expense) => sum + expense.amount, 0);
+
+    // Car expenses for the selected period
+    const carExpensesForPeriod = expenses.filter(expense => {
+      const matchesCategory = ['Car - Fuel', 'Car - Other'].includes(expense.category);
+      if (!matchesCategory) return false;
+      
+      if (period === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === period;
+      }
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+
+    // Fuel reimbursements for the selected period
+    const fuelReimbursementsForPeriod = expenses.filter(expense => {
+      const matchesCategory = expense.category === 'Fuel Reimbursement';
+      if (!matchesCategory) return false;
+      
+      if (period === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === period;
+      }
+    }).reduce((sum, expense) => sum + expense.amount, 0);
+
+    const netCarExpensesForPeriod = carExpensesForPeriod - fuelReimbursementsForPeriod;
+
+    return {
+      housing: housingExpensesForPeriod,
+      grocery: groceryExpensesForPeriod,
+      car: netCarExpensesForPeriod,
+      total: housingExpensesForPeriod + groceryExpensesForPeriod + netCarExpensesForPeriod
+    };
+  };
+
+  // Get totals for the main summary period
+  const mainSummaryTotals = getMonthlyTotalsByPeriod(totalSummaryPeriod);
+  
+    // Calculate current month total
+  const monthlyTotalSpent = mainSummaryTotals.total;
   const lastMonthData = getComparisonMonthTotal();
   const lastMonthTotalSpent = lastMonthData.total;
+
+  const [showMonthlySummaryChart, setShowMonthlySummaryChart] = useState(true);
 
   // Helper function to get period display name
   const getPeriodDisplayName = (period, availableMonths) => {
@@ -1480,7 +1567,121 @@ const ExpenseTracker = () => {
         </div>
 
         {/* Donut Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Monthly Summary Donut Chart */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <PieChart className="text-blue-600" size={24} />
+                Monthly Expense Breakdown - {getPeriodDisplayName(totalSummaryPeriod, availableMonths)}
+              </h3>
+              <div className="flex gap-2">
+                <div className="relative" ref={totalSummaryCalendarRef}>
+                  <button
+                    onClick={() => setShowTotalSummaryCalendar(!showTotalSummaryCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Calendar size={16} />
+                    {getPeriodDisplayName(totalSummaryPeriod, availableMonths)}
+                  </button>
+                  {showTotalSummaryCalendar && (
+                    <MonthlyCalendar
+                      value={totalSummaryPeriod}
+                      onChange={setTotalSummaryPeriod}
+                      availableMonths={availableMonths}
+                      onClose={() => setShowTotalSummaryCalendar(false)}
+                    />
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowMonthlySummaryChart(!showMonthlySummaryChart)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {showMonthlySummaryChart ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+            
+            {showMonthlySummaryChart && (
+              <div className="h-96 flex items-center justify-center">
+                {(mainSummaryTotals.housing > 0 || mainSummaryTotals.grocery > 0 || mainSummaryTotals.car > 0) ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          {
+                            name: 'Housing & Utilities',
+                            value: mainSummaryTotals.housing,
+                            fill: '#6366f1'
+                          },
+                          {
+                            name: 'Grocery & Dining',
+                            value: mainSummaryTotals.grocery,
+                            fill: '#10b981'
+                          },
+                          {
+                            name: 'Car Expenses',
+                            value: mainSummaryTotals.car,
+                            fill: '#ef4444'
+                          }
+                        ].filter(item => item.value > 0)}
+                        cx="45%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                          if (percent <= 0.05) return '';
+                          
+                          // Position for percentage (inside the colored section)
+                          const innerLabelRadius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const innerX = cx + innerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const innerY = cy + innerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          // Position for £ amount (outside the donut)
+                          const outerLabelRadius = outerRadius + 20;
+                          const outerX = cx + outerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const outerY = cy + outerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          return (
+                            <g>
+                              {/* Percentage inside */}
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+                                {(percent * 100).toFixed(0)}%
+                              </text>
+                              {/* £ amount outside */}
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                                £{value.toFixed(0)}
+                              </text>
+                            </g>
+                          );
+                        }}
+                        outerRadius={120}
+                        innerRadius={60}
+                        fill="#8884d8"
+                        dataKey="value"
+                      />
+                      <Legend 
+                        verticalAlign="top"
+                        align="right"
+                        layout="vertical"
+                        iconSize={12}
+                        wrapperStyle={{
+                          paddingLeft: '20px',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <PieChart className="mx-auto mb-3 text-gray-400" size={48} />
+                    <p className="text-lg font-medium">No expenses found</p>
+                    <p className="text-sm">No data available for the selected period</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
           {/* Car Expenses Donut Chart */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">

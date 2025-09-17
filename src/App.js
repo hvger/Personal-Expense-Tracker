@@ -1625,8 +1625,8 @@ const ExpenseTracker = () => {
                             fill: '#ef4444'
                           }
                         ].filter(item => item.value > 0)}
-                        cx="45%"
-                        cy="50%"
+                        cx="50%"
+                        cy="55%"
                         labelLine={false}
                         label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
                           if (percent <= 0.05) return '';
@@ -1661,7 +1661,7 @@ const ExpenseTracker = () => {
                       />
                       <Legend 
                         verticalAlign="top"
-                        align="right"
+                        align="center"
                         layout="vertical"
                         iconSize={12}
                         wrapperStyle={{
@@ -1757,8 +1757,8 @@ const ExpenseTracker = () => {
                             fill: '#06c42f'
                           }
                         ].filter(item => item.value > 0)}
-                        cx="45%"
-                        cy="50%"
+                        cx="50%"
+                        cy="55%"
                         labelLine={false}
                         label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
                           if (percent <= 0.05) return '';
@@ -1793,7 +1793,7 @@ const ExpenseTracker = () => {
                       />
                       <Legend 
                         verticalAlign="top"
-                        align="right"
+                        align="center"
                         layout="vertical"
                         iconSize={12}
                         wrapperStyle={{
@@ -1889,8 +1889,8 @@ const ExpenseTracker = () => {
                             fill: '#14b8a6'
                           }
                         ].filter(item => item.value > 0)}
-                        cx="45%"
-                        cy="50%"
+                        cx="50%"
+                        cy="55%"
                         labelLine={false}
                         label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
                           if (percent <= 0.05) return '';
@@ -1925,7 +1925,7 @@ const ExpenseTracker = () => {
                       />
                       <Legend 
                         verticalAlign="top"
-                        align="right"
+                        align="center"
                         layout="vertical"
                         iconSize={12}
                         wrapperStyle={{

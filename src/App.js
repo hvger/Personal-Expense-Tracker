@@ -878,11 +878,11 @@ const ExpenseTracker = () => {
                       <p className="text-xs text-gray-500 mt-1">
                         {monthlyTotalSpent > lastMonthTotalSpent  ? (
                           <span className="text-red-500">
-                            +£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs current
+                            +£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs last month
                           </span>
                         ) : (
                           <span className="text-green-500">
-                            -£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs current
+                            -£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs last month
                           </span>
                         )}
                       </p>

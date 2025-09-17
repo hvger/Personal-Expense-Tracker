@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie  } from 'recharts';
 
 
@@ -151,6 +151,8 @@ const ExpenseTracker = () => {
   const [showHousingSummaryCalendar, setShowHousingSummaryCalendar] = useState(false); // Added missing state
   const [showChartCalendar, setShowChartCalendar] = useState(false);
   const [showGroceryCalendar, setShowGroceryCalendar] = useState(false);
+
+  const [showExpensesList, setShowExpensesList] = useState(false);
 
   // Add these state variables to your component
   const [lastMonthSummaryPeriod, setLastMonthSummaryPeriod] = useState(() => {

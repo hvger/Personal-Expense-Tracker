@@ -873,6 +873,20 @@ const ExpenseTracker = () => {
                     <p className="text-sm font-medium text-gray-600">
                       {getPeriodDisplayName(totalSummaryPeriod, availableMonths)} Total
                     </p>
+                    {/* Optional: Show comparison with current month */}
+                    {monthlyTotalSpent !== 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {monthlyTotalSpent > lastMonthTotalSpent  ? (
+                          <span className="text-red-500">
+                            +£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs current
+                          </span>
+                        ) : (
+                          <span className="text-green-500">
+                            -£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs current
+                          </span>
+                        )}
+                      </p>
+                    )}
                     <p className="text-2xl font-bold text-slate-600">£{monthlyTotalSpent.toFixed(2)}</p>
                   </div>
                   <CreditCard className="text-green-500" size={32} />
@@ -909,20 +923,6 @@ const ExpenseTracker = () => {
                     {lastMonthData.monthName} Total
                   </p>
                   <p className="text-2xl font-bold text-slate-600">£{lastMonthTotalSpent.toFixed(2)}</p>
-                  {/* Optional: Show comparison with current month */}
-                  {monthlyTotalSpent !== 0 && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {lastMonthTotalSpent > monthlyTotalSpent ? (
-                        <span className="text-green-500">
-                          -£{(lastMonthTotalSpent - monthlyTotalSpent).toFixed(2)} vs current
-                        </span>
-                      ) : (
-                        <span className="text-red-500">
-                          +£{(monthlyTotalSpent - lastMonthTotalSpent).toFixed(2)} vs current
-                        </span>
-                      )}
-                    </p>
-                  )}
                 </div>
                 <Calendar className="text-blue-500 ml-2" size={32} />
               </div>
@@ -1856,33 +1856,29 @@ const ExpenseTracker = () => {
               </div>
             </div>
 
-            {/* Category Breakdown */}
+            {/* Category Breakdown - Now Horizontal */}
             {categoryTotals.length > 0 && (
               <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Summary</h3>
-                <div className="space-y-3">
+                <div className="flex flex-wrap gap-3">
                   {categoryTotals.map((item) => {
                     const IconComponent = item.icon;
                     return (
-                      <div key={item.value} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${item.color}`}>
-                            <IconComponent className="text-white" size={16} />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{item.value}</p>
-                            <p className="text-sm text-gray-600">{item.count} entries</p>
-                          </div>
+                      <div key={item.value} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg min-w-fit flex-1">
+                        <div className={`p-2 rounded-lg ${item.color}`}>
+                          <IconComponent className="text-white" size={16} />
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-900">
+                        <div className="text-center">
+                          <p className="font-medium text-gray-900 text-sm">{item.value}</p>
+                          <p className="text-xs text-gray-600">{item.count} entries</p>
+                          <p className="font-medium text-gray-900 mt-1">
                             {item.isReimbursement ? '+' : '-'}£{item.total.toFixed(2)}
                           </p>
                           {item.reimbursements > 0 && (
-                            <p className="text-sm text-green-600">+£{item.reimbursements.toFixed(2)}</p>
+                            <p className="text-xs text-green-600">+£{item.reimbursements.toFixed(2)}</p>
                           )}
                           {(item.reimbursements > 0 || item.isReimbursement) && (
-                            <p className="text-sm font-medium text-purple-600">
+                            <p className="text-xs font-medium text-purple-600">
                               £{item.isReimbursement ? item.total.toFixed(2) : item.net.toFixed(2)} net
                             </p>
                           )}
@@ -1895,11 +1891,21 @@ const ExpenseTracker = () => {
             )}
           </div>
 
-          {/* Expenses List */}
+          {/* Expenses List - Now Collapsible */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">Recent Expenses</h2>
+              <div className="flex justify-between items-center mb-4">
+                <button
+                  onClick={() => setShowExpensesList(!showExpensesList)}
+                  className="flex items-center gap-2 text-xl font-semibold text-gray-800 hover:text-gray-600 transition-colors"
+                >
+                  <span>Recent Expenses</span>
+                  {showExpensesList ? (
+                    <ChevronUp size={20} />
+                  ) : (
+                    <ChevronDown size={20} />
+                  )}
+                </button>
                 <button
                   onClick={loadExpenses}
                   className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
@@ -1909,56 +1915,58 @@ const ExpenseTracker = () => {
                 </button>
               </div>
 
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {expenses.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No expenses found. Add your first expense!</p>
-                  </div>
-                ) : (
-                  expenses.map(expense => {
-                    const category = categories.find(cat => cat.value === expense.category);
-                    const IconComponent = category?.icon || DollarSign;
-                    const netAmount = expense.amount - (expense.reimbursementAmount || 0);
-                    const isReimbursement = expense.category === 'Fuel Reimbursement';
-                    
-                    return (
-                      <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${category?.color || 'bg-gray-500'}`}>
-                            <IconComponent className="text-white" size={16} />
+              {showExpensesList && (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {expenses.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No expenses found. Add your first expense!</p>
+                    </div>
+                  ) : (
+                    expenses.map(expense => {
+                      const category = categories.find(cat => cat.value === expense.category);
+                      const IconComponent = category?.icon || DollarSign;
+                      const netAmount = expense.amount - (expense.reimbursementAmount || 0);
+                      const isReimbursement = expense.category === 'Fuel Reimbursement';
+                      
+                      return (
+                        <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${category?.color || 'bg-gray-500'}`}>
+                              <IconComponent className="text-white" size={16} />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{expense.description}</p>
+                              <p className="text-sm text-gray-500">{expense.category} • {expense.date}</p>
+                              {expense.reimbursementAmount > 0 && (
+                                <p className="text-sm text-green-600">Reimbursable: £{expense.reimbursementAmount.toFixed(2)}</p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{expense.description}</p>
-                            <p className="text-sm text-gray-500">{expense.category} • {expense.date}</p>
-                            {expense.reimbursementAmount > 0 && (
-                              <p className="text-sm text-green-600">Reimbursable: £{expense.reimbursementAmount.toFixed(2)}</p>
-                            )}
+                          
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <span className={`text-lg font-semibold ${isReimbursement ? 'text-green-600' : 'text-red-600'}`}>
+                                {isReimbursement ? '+' : '-'}£{expense.amount.toFixed(2)}
+                              </span>
+                              {expense.reimbursementAmount > 0 && (
+                                <p className="text-sm font-medium text-purple-600">
+                                  £{netAmount.toFixed(2)} net
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => deleteExpense(expense.id)}
+                              className="text-red-500 hover:text-red-700 transition-colors p-1"
+                            >
+                              <Trash2 size={18} />
+                            </button>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <span className={`text-lg font-semibold ${isReimbursement ? 'text-green-600' : 'text-red-600'}`}>
-                              {isReimbursement ? '+' : '-'}£{expense.amount.toFixed(2)}
-                            </span>
-                            {expense.reimbursementAmount > 0 && (
-                              <p className="text-sm font-medium text-purple-600">
-                                £{netAmount.toFixed(2)} net
-                              </p>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => deleteExpense(expense.id)}
-                            className="text-red-500 hover:text-red-700 transition-colors p-1"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

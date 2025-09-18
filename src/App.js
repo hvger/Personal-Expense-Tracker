@@ -670,7 +670,7 @@ const ExpenseTracker = () => {
   const lastMonthData = getComparisonMonthTotal();
   const lastMonthTotalSpent = lastMonthData.total;
 
-  const [showMonthlySummaryChart, setShowMonthlySummaryChart] = useState(true);
+  const [showMonthlySummaryChart, setShowMonthlySummaryChart] = useState(false);
   
 
   const getDonutChartData = (period, chartType) => {
@@ -1722,8 +1722,8 @@ const ExpenseTracker = () => {
                             </g>
                           );
                         }}
-                        outerRadius={120}
-                        innerRadius={60}
+                        outerRadius={110}
+                        innerRadius={55}
                         fill="#8884d8"
                         dataKey="value"
                       />
@@ -2014,6 +2014,41 @@ const ExpenseTracker = () => {
             )}
           </div>
         </div>
+        <div className="space-y-8">
+          {/* Category Breakdown - Full Width at Top */}
+          {categoryTotals.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Summary</h3>
+              <div className="flex flex-wrap gap-3">
+                {categoryTotals.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <div key={item.value} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg min-w-fit flex-1">
+                      <div className={`p-2 rounded-lg ${item.color}`}>
+                        <IconComponent className="text-white" size={16} />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium text-gray-900 text-sm">{item.value}</p>
+                        <p className="text-xs text-gray-600">{item.count} entries</p>
+                        <p className="font-medium text-gray-900 mt-1">
+                          {item.isReimbursement ? '+' : '-'}£{item.total.toFixed(2)}
+                        </p>
+                        {item.reimbursements > 0 && (
+                          <p className="text-xs text-green-600">+£{item.reimbursements.toFixed(2)}</p>
+                        )}
+                        {(item.reimbursements > 0 || item.isReimbursement) && (
+                          <p className="text-xs font-medium text-purple-600">
+                            £{item.isReimbursement ? item.total.toFixed(2) : item.net.toFixed(2)} net
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Add Expense Form */}
@@ -2126,40 +2161,6 @@ const ExpenseTracker = () => {
                 </button>
               </div>
             </div>
-
-            {/* Category Breakdown - Now Horizontal */}
-            {categoryTotals.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Summary</h3>
-                <div className="flex flex-wrap gap-3">
-                  {categoryTotals.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div key={item.value} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg min-w-fit flex-1">
-                        <div className={`p-2 rounded-lg ${item.color}`}>
-                          <IconComponent className="text-white" size={16} />
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium text-gray-900 text-sm">{item.value}</p>
-                          <p className="text-xs text-gray-600">{item.count} entries</p>
-                          <p className="font-medium text-gray-900 mt-1">
-                            {item.isReimbursement ? '+' : '-'}£{item.total.toFixed(2)}
-                          </p>
-                          {item.reimbursements > 0 && (
-                            <p className="text-xs text-green-600">+£{item.reimbursements.toFixed(2)}</p>
-                          )}
-                          {(item.reimbursements > 0 || item.isReimbursement) && (
-                            <p className="text-xs font-medium text-purple-600">
-                              £{item.isReimbursement ? item.total.toFixed(2) : item.net.toFixed(2)} net
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Expenses List - Now Collapsible */}

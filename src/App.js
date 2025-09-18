@@ -2014,23 +2014,24 @@ const ExpenseTracker = () => {
             )}
           </div>
         </div>
+
         <div className="space-y-8">
           {/* Category Breakdown - Full Width at Top */}
           {categoryTotals.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Summary</h3>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {categoryTotals.map((item) => {
                   const IconComponent = item.icon;
                   return (
-                    <div key={item.value} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg min-w-fit flex-1">
-                      <div className={`p-2 rounded-lg ${item.color}`}>
-                        <IconComponent className="text-white" size={16} />
+                    <div key={item.value} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg min-w-fit flex-1">
+                      <div className={`p-1.5 rounded-lg ${item.color}`}>
+                        <IconComponent className="text-white" size={14} />
                       </div>
                       <div className="text-center">
                         <p className="font-medium text-gray-900 text-sm">{item.value}</p>
                         <p className="text-xs text-gray-600">{item.count} entries</p>
-                        <p className="font-medium text-gray-900 mt-1">
+                        <p className="font-medium text-gray-900 mt-0.5 text-xs">
                           {item.isReimbursement ? '+' : '-'}£{item.total.toFixed(2)}
                         </p>
                         {item.reimbursements > 0 && (

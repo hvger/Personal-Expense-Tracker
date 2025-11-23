@@ -80,32 +80,10 @@ def serve_static(path):
         return send_from_directory(app.static_folder, path)
     except:
         return send_from_directory(app.static_folder, 'index.html')
-    
-@app.route('/api/health')
-def health_check():
-    """Health check endpoint to verify Google Sheets connection"""
-    try:
-        if sheet is None:
-            return jsonify({'status': 'error', 'message': 'Google Sheets not connected'}), 500
-        
-        # Test connection by getting worksheet title
-        worksheet_title = sheet.title
-        return jsonify({
-            'status': 'healthy', 
-            'message': 'Google Sheets connected',
-            'worksheet': worksheet_title
-        }), 200
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/expenses', methods=['GET'])
 def get_expenses():
-    try:
-        expenses = load_expenses()
-        return jsonify(expenses)
-    except Exception as e:
-        print(f"❌ Error in GET /api/expenses: {e}")
-        return jsonify({'error': 'Failed to load expenses'}), 500
+    return jsonify(load_expenses())
 
 @app.route('/api/expenses', methods=['POST'])
 def add_expense():
@@ -134,7 +112,6 @@ def add_expense():
         else:
             return jsonify({'error': 'Failed to save expense'}), 500
     except Exception as e:
-        print(f"❌ Error in POST /api/expenses: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/expenses/<expense_id>', methods=['DELETE'])
@@ -147,7 +124,6 @@ def delete_expense(expense_id):
         else:
             return jsonify({'error': 'Failed to delete expense'}), 500
     except Exception as e:
-        print(f"❌ Error in DELETE /api/expenses: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/expenses/<expense_id>', methods=['PUT'])

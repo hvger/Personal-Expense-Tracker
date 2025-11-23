@@ -1,8 +1,81 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie  } from 'recharts';
+import { ChevronDown, ChevronUp, PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight,  CheckCircle, XCircle, Info, X } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, LineChart, Line } from 'recharts';
 
 
+const sampleExpenses = [
+  {
+    id: '1',
+    description: 'Weekly Groceries',
+    amount: 85.50,
+    category: 'Groceries',
+    date: '2024-01-15',
+    isReimbursement: false,
+    reimbursementAmount: 0,
+    timestamp: '2024-01-15T10:30:00Z'
+  },
+  {
+    id: '2',
+    description: 'Fuel Fill-up',
+    amount: 65.00,
+    category: 'Car - Fuel',
+    date: '2024-01-14',
+    isReimbursement: true,
+    reimbursementAmount: 45.00,
+    timestamp: '2024-01-14T14:20:00Z'
+  },
+  {
+    id: '3',
+    description: 'Dinner at Restaurant',
+    amount: 42.75,
+    category: 'Dining',
+    date: '2024-01-13',
+    isReimbursement: false,
+    reimbursementAmount: 0,
+    timestamp: '2024-01-13T19:45:00Z'
+  },
+  {
+    id: '4',
+    description: 'Monthly Rent',
+    amount: 1200.00,
+    category: 'Rent and Council Tax',
+    date: '2024-01-01',
+    isReimbursement: false,
+    reimbursementAmount: 0,
+    timestamp: '2024-01-01T09:00:00Z'
+  },
+  // Add more sample data from previous months
+  {
+    id: '5',
+    description: 'December Groceries',
+    amount: 92.30,
+    category: 'Groceries',
+    date: '2023-12-10',
+    isReimbursement: false,
+    reimbursementAmount: 0,
+    timestamp: '2023-12-10T11:20:00Z'
+  },
+  {
+    id: '6',
+    description: 'Car Maintenance',
+    amount: 120.00,
+    category: 'Car - Other',
+    date: '2023-12-05',
+    isReimbursement: false,
+    reimbursementAmount: 0,
+    timestamp: '2023-12-05T14:00:00Z'
+  },
+  {
+    id: '7',
+    description: 'November Rent',
+    amount: 1200.00,
+    category: 'Rent and Council Tax',
+    date: '2023-11-01',
+    isReimbursement: false,
+    reimbursementAmount: 0,
+    timestamp: '2023-11-01T09:00:00Z'
+  }
+];
 // Monthly Calendar Picker Component
 const MonthlyCalendar = ({ value, onChange, availableMonths, onClose }) => {
   const currentDate = new Date();
@@ -108,7 +181,10 @@ const MonthlyCalendar = ({ value, onChange, availableMonths, onClose }) => {
 };
 
 const ExpenseTracker = () => {
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState(sampleExpenses);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
   
   const [formData, setFormData] = useState({
     description: '',
@@ -118,6 +194,60 @@ const ExpenseTracker = () => {
     isReimbursement: false,
     reimbursementAmount: ''
   });
+
+   // Toast notification state
+  const [toasts, setToasts] = useState([]);
+
+  // Toast functions
+  const addToast = (message, type = 'info') => {
+    const id = Date.now().toString();
+    const toast = { id, message, type };
+    setToasts(prev => [...prev, toast]);
+    
+    // Auto dismiss after 3 seconds
+    setTimeout(() => {
+      removeToast(id);
+    }, 3000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
+  // Toast component
+  const Toast = ({ toast }) => {
+    const bgColor = {
+      success: 'bg-green-500',
+      error: 'bg-red-500',
+      info: 'bg-blue-500'
+    }[toast.type];
+
+    const IconComponent = {
+      success: CheckCircle,
+      error: XCircle,
+      info: Info
+    }[toast.type];
+
+    return (
+      <div className={`${bgColor} text-white p-4 rounded-lg shadow-lg mb-2 flex items-center justify-between min-w-80 max-w-md transform transition-transform duration-300 translate-x-0`}>
+        <div className="flex items-center gap-2">
+          <IconComponent size={20} />
+          <span>{toast.message}</span>
+        </div>
+        <button
+          onClick={() => removeToast(toast.id)}
+          className="text-white hover:text-gray-200 ml-4"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    );
+  };
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
+
+  
 
   // Separate periods for donut charts
   const [donutCarPeriod, setDonutCarPeriod] = useState('recent');
@@ -135,6 +265,11 @@ const ExpenseTracker = () => {
   const [showCarPieChart, setShowCarPieChart] = useState(false);
   const [chartMode, setChartMode] = useState('total'); // 'total' or 'net'
   const [chartPeriod, setChartPeriod] = useState('recent'); // 'recent' or specific month like '2025-08'
+
+  // Trend chart states
+  const [showTrendChart, setShowTrendChart] = useState(false);
+  const [trendPeriod, setTrendPeriod] = useState('6'); // 3, 6, 12, all
+  const [trendChartData, setTrendChartData] = useState([]);
   
   // New state for grocery chart
   const [showGroceryBarChart, setShowGroceryBarChart] = useState(false);
@@ -226,26 +361,34 @@ const ExpenseTracker = () => {
     };
   }, []);
 
-  // Load expenses from backend
+  useEffect(() => {
+    if (showTrendChart) {
+      calculateTrendData();
+    }
+  }, [expenses, trendPeriod, showTrendChart]);
+
+
+  // Load expenses
   const loadExpenses = async () => {
     try {
       const response = await fetch("/api/expenses");
       if (response.ok) {
         const data = await response.json();
         setExpenses(data);
+        addToast('Expenses loaded successfully', 'success');
       }
     } catch (error) {
       console.error('Error loading expenses:', error);
+      addToast('Failed to load expenses', 'error');
     }
   };
 
-  useEffect(() => {
-    loadExpenses();
-  }, []);
-
   // Add new expense
   const addExpense = async () => {
-    if (!formData.description || !formData.amount || !formData.category) return;
+    if (!formData.description || !formData.amount || !formData.category) {
+      addToast('Please fill in all required fields', 'error');
+      return;
+    }
 
     const newExpense = {
       description: formData.description,
@@ -276,27 +419,130 @@ const ExpenseTracker = () => {
           isReimbursement: false,
           reimbursementAmount: ''
         });
+        addToast('Expense added successfully!', 'success');
       }
     } catch (error) {
       console.error('Error adding expense:', error);
+      addToast('Failed to add expense', 'error');
     }
   };
 
-  // Delete expense
-  const deleteExpense = async (id) => {
+  // Delete expense with confirmation
+  const confirmDeleteExpense = (expense) => {
+    setExpenseToDelete(expense);
+    setShowDeleteConfirm(true);
+  };
+
+  const deleteExpense = async () => {
+    if (!expenseToDelete) return;
+
     try {
-      const response = await fetch(`/api/expenses/${id}`, {
+      const response = await fetch(`/api/expenses/${expenseToDelete.id}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
-        setExpenses(expenses.filter(expense => expense.id !== id));
+        setExpenses(expenses.filter(expense => expense.id !== expenseToDelete.id));
+        addToast('Expense deleted successfully', 'success');
+      } else {
+        addToast('Failed to delete expense', 'error');
       }
     } catch (error) {
       console.error('Error deleting expense:', error);
+      addToast('Failed to delete expense', 'error');
+    } finally {
+      setShowDeleteConfirm(false);
+      setExpenseToDelete(null);
     }
   };
 
+  // Edit expense
+  const editExpense = async (expenseData) => {
+    try {
+      const response = await fetch(`/api/expenses/${expenseData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(expenseData)
+      });
+
+      if (response.ok) {
+        await response.json();
+        loadExpenses();
+        setShowEditModal(false);
+        setEditingExpense(null);
+        addToast('Expense updated successfully!', 'success');
+      } else {
+        addToast('Failed to update expense', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      addToast('Failed to update expense', 'error');
+    }
+  };
+
+  // Handle edit click
+  const handleEditClick = (expense) => {
+    setEditingExpense(expense);
+    setFormData({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      category: expense.category,
+      date: expense.date,
+      isReimbursement: expense.isReimbursement || false,
+      reimbursementAmount: expense.reimbursementAmount ? expense.reimbursementAmount.toString() : ''
+    });
+    setShowEditModal(true);
+  };
+
+  // Duplicate expense
+  const duplicateExpense = async (expenseData) => {
+    try {
+      const newExpense = {
+        description: expenseData.description,
+        amount: expenseData.amount,
+        category: expenseData.category,
+        date: expenseData.date,
+        isReimbursement: expenseData.isReimbursement,
+        reimbursementAmount: expenseData.reimbursementAmount
+      };
+
+      const response = await fetch("/api/expenses", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newExpense)
+      });
+
+      if (response.ok) {
+        const savedExpense = await response.json();
+        setExpenses([savedExpense, ...expenses]);
+        setShowDuplicateModal(false);
+        setEditingExpense(null);
+        addToast('Expense duplicated successfully!', 'success');
+      }
+    } catch (error) {
+      console.error('Error duplicating expense:', error);
+      addToast('Failed to duplicate expense', 'error');
+    }
+  };
+
+  // Handle duplicate click with info toast
+  const handleDuplicateClick = (expense) => {
+    setEditingExpense(expense);
+    setFormData({
+      description: expense.description + ' (Copy)',
+      amount: expense.amount.toString(),
+      category: expense.category,
+      date: new Date().toISOString().split('T')[0],
+      isReimbursement: expense.isReimbursement || false,
+      reimbursementAmount: expense.reimbursementAmount ? expense.reimbursementAmount.toString() : ''
+    });
+    setShowDuplicateModal(true);
+    addToast('Expense copied to form', 'info');
+  };
   // Calculate totals with reimbursement logic
   const fuelExpenses = expenses.filter(expense => expense.category === 'Car - Fuel');
   const fuelReimbursements = expenses.filter(expense => expense.category === 'Fuel Reimbursement');
@@ -309,6 +555,59 @@ const ExpenseTracker = () => {
   const netExpenses = expenses.reduce((sum, expense) => {
     return expense.category === 'Fuel Reimbursement' ? sum - expense.amount : sum + expense.amount;
   }, 0) - totalReimbursements;
+
+  // Calculate trend data
+  const calculateTrendData = () => {
+    const periods = [];
+    const currentDate = new Date();
+    const monthCount = trendPeriod === 'all' ? 24 : parseInt(trendPeriod); // Show up to 24 months for "all"
+    
+    for (let i = monthCount - 1; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthName = date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+      
+      // Calculate totals for this month
+      const monthlyExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        const expenseMonthKey = `${expenseDate.getFullYear()}-${String(expenseDate.getMonth() + 1).padStart(2, '0')}`;
+        return expenseMonthKey === monthKey;
+      });
+
+      // Housing expenses
+      const housingTotal = monthlyExpenses
+        .filter(expense => ['Rent and Council Tax', 'Utilities', 'Internet'].includes(expense.category))
+        .reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+
+      // Grocery & Dining expenses
+      const groceryTotal = monthlyExpenses
+        .filter(expense => ['Groceries', 'Dining', 'Small Shop'].includes(expense.category))
+        .reduce((sum, expense) => sum + expense.amount, 0);
+
+      // Car expenses (net)
+      const carTotal = monthlyExpenses
+        .filter(expense => ['Car - Fuel', 'Car - Other', 'Fuel Reimbursement'].includes(expense.category))
+        .reduce((sum, expense) => {
+          if (expense.category === 'Fuel Reimbursement') {
+            return sum - expense.amount;
+          }
+          return sum + expense.amount - (expense.reimbursementAmount || 0);
+        }, 0);
+
+      const total = housingTotal + groceryTotal + carTotal;
+
+      periods.push({
+        month: monthKey,
+        monthName,
+        housing: housingTotal,
+        grocery: groceryTotal,
+        car: Math.max(0, carTotal), // Ensure car expenses don't go negative
+        total
+      });
+    }
+
+    setTrendChartData(periods);
+  };
 
   const monthlyExpenses = expenses.filter(expense => {
     if (grocerySummaryPeriod === 'current') {
@@ -2015,6 +2314,108 @@ const ExpenseTracker = () => {
           </div>
         </div>
 
+        {/* Spending Trend Line Chart */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <BarChart3 className="text-purple-600" size={24} />
+              Spending Trends Over Time
+            </h3>
+            <div className="flex gap-2">
+              <select
+                value={trendPeriod}
+                onChange={(e) => setTrendPeriod(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+              >
+                <option value="3">Last 3 Months</option>
+                <option value="6">Last 6 Months</option>
+                <option value="12">Last 12 Months</option>
+                <option value="all">All Time</option>
+              </select>
+              <button
+                onClick={() => setShowTrendChart(!showTrendChart)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                {showTrendChart ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+          
+          {showTrendChart && (
+            <div className="h-96">
+              {trendChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={trendChartData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="monthName" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      interval={0}
+                      fontSize={12}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value, name) => [`£${value.toFixed(2)}`, name]}
+                      labelStyle={{ color: '#374151' }}
+                      contentStyle={{ borderRadius: '8px' }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="#6366f1" 
+                      strokeWidth={3}
+                      dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: '#6366f1' }}
+                      name="Total Spending"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="housing" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={2}
+                      dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5, fill: '#8b5cf6' }}
+                      name="Housing & Utilities"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="grocery" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5, fill: '#10b981' }}
+                      name="Grocery & Dining"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="car" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5, fill: '#ef4444' }}
+                      name="Car Expenses"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center text-gray-500">
+                    <BarChart3 className="mx-auto mb-3 text-gray-400" size={48} />
+                    <p className="text-lg font-medium">No trend data available</p>
+                    <p className="text-sm">Add more expenses to see spending trends</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="space-y-8">
           {/* Category Breakdown - Full Width at Top */}
           {categoryTotals.length > 0 && (
@@ -2227,12 +2628,29 @@ const ExpenseTracker = () => {
                                 </p>
                               )}
                             </div>
-                            <button
-                              onClick={() => deleteExpense(expense.id)}
-                              className="text-red-500 hover:text-red-700 transition-colors p-1"
-                            >
-                              <Trash2 size={18} />
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleDuplicateClick(expense)}
+                                className="text-blue-500 hover:text-blue-700 transition-colors p-1"
+                                title="Duplicate Expense"
+                              >
+                                <PlusCircle size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleEditClick(expense)}
+                                className="text-green-500 hover:text-green-700 transition-colors p-1"
+                                title="Edit Expense"
+                              >
+                                <Wrench size={18} />
+                              </button>
+                              <button
+                                onClick={() => confirmDeleteExpense(expense)}
+                                className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                title="Delete Expense"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -2242,7 +2660,6 @@ const ExpenseTracker = () => {
               )}
             </div>
           </div>
-        </div>
         
         {/* Transaction Modal */}
         {showTransactionModal && (
@@ -2311,6 +2728,332 @@ const ExpenseTracker = () => {
                       £{modalTransactions.reduce((sum, expense) => sum + expense.amount, 0).toFixed(2)}
                     </span>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Edit Expense Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800">Edit Expense</h2>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingExpense(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., Weekly groceries, Gas fill-up"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount (£)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map(category => (
+                        <option key={category.value} value={category.value}>{category.value}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  {showReimbursementFields && (
+                    <>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="edit-reimbursement"
+                          checked={formData.isReimbursement}
+                          onChange={(e) => setFormData({...formData, isReimbursement: e.target.checked})}
+                          className="mr-2"
+                        />
+                        <label htmlFor="edit-reimbursement" className="text-sm font-medium text-gray-700">
+                          Work-related (reimbursable)
+                        </label>
+                      </div>
+
+                      {formData.isReimbursement && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Reimbursement Amount (£)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.reimbursementAmount}
+                            onChange={(e) => setFormData({...formData, reimbursementAmount: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingExpense(null);
+                      }}
+                      className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => editExpense({
+                        ...formData,
+                        id: editingExpense.id,
+                        amount: parseFloat(formData.amount),
+                        reimbursementAmount: formData.reimbursementAmount ? parseFloat(formData.reimbursementAmount) : 0
+                      })}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Wrench size={20} />
+                      Update Expense
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Duplicate Expense Modal */}
+        {showDuplicateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800">Duplicate Expense</h2>
+                <button
+                  onClick={() => {
+                    setShowDuplicateModal(false);
+                    setEditingExpense(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., Weekly groceries, Gas fill-up"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount (£)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map(category => (
+                        <option key={category.value} value={category.value}>{category.value}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  {showReimbursementFields && (
+                    <>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="duplicate-reimbursement"
+                          checked={formData.isReimbursement}
+                          onChange={(e) => setFormData({...formData, isReimbursement: e.target.checked})}
+                          className="mr-2"
+                        />
+                        <label htmlFor="duplicate-reimbursement" className="text-sm font-medium text-gray-700">
+                          Work-related (reimbursable)
+                        </label>
+                      </div>
+
+                      {formData.isReimbursement && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Reimbursement Amount (£)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={formData.reimbursementAmount}
+                            onChange={(e) => setFormData({...formData, reimbursementAmount: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => {
+                        setShowDuplicateModal(false);
+                        setEditingExpense(null);
+                      }}
+                      className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => duplicateExpense({
+                        ...formData,
+                        amount: parseFloat(formData.amount),
+                        reimbursementAmount: formData.reimbursementAmount ? parseFloat(formData.reimbursementAmount) : 0
+                      })}
+                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <PlusCircle size={20} />
+                      Duplicate Expense
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* Toast Notifications Container */}
+        <div className="fixed top-4 right-4 z-50">
+          {toasts.map(toast => (
+            <Toast key={toast.id} toast={toast} />
+          ))}
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && expenseToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">Confirm Delete</h2>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-gray-700 mb-4">
+                  Are you sure you want to delete this expense?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="font-medium text-red-800">{expenseToDelete.description}</p>
+                  <p className="text-red-600">£{expenseToDelete.amount.toFixed(2)} • {expenseToDelete.category}</p>
+                  <p className="text-red-500 text-sm">{expenseToDelete.date}</p>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setExpenseToDelete(null);
+                    }}
+                    className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteExpense}
+                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={20} />
+                    Delete Expense
+                  </button>
                 </div>
               </div>
             </div>

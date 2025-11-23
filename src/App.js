@@ -3,79 +3,7 @@ import { ChevronDown, ChevronUp, PlusCircle, Trash2,CreditCard, Wrench, Wifi, Ho
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, LineChart, Line } from 'recharts';
 
 
-const sampleExpenses = [
-  {
-    id: '1',
-    description: 'Weekly Groceries',
-    amount: 85.50,
-    category: 'Groceries',
-    date: '2024-01-15',
-    isReimbursement: false,
-    reimbursementAmount: 0,
-    timestamp: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: '2',
-    description: 'Fuel Fill-up',
-    amount: 65.00,
-    category: 'Car - Fuel',
-    date: '2024-01-14',
-    isReimbursement: true,
-    reimbursementAmount: 45.00,
-    timestamp: '2024-01-14T14:20:00Z'
-  },
-  {
-    id: '3',
-    description: 'Dinner at Restaurant',
-    amount: 42.75,
-    category: 'Dining',
-    date: '2024-01-13',
-    isReimbursement: false,
-    reimbursementAmount: 0,
-    timestamp: '2024-01-13T19:45:00Z'
-  },
-  {
-    id: '4',
-    description: 'Monthly Rent',
-    amount: 1200.00,
-    category: 'Rent and Council Tax',
-    date: '2024-01-01',
-    isReimbursement: false,
-    reimbursementAmount: 0,
-    timestamp: '2024-01-01T09:00:00Z'
-  },
-  // Add more sample data from previous months
-  {
-    id: '5',
-    description: 'December Groceries',
-    amount: 92.30,
-    category: 'Groceries',
-    date: '2023-12-10',
-    isReimbursement: false,
-    reimbursementAmount: 0,
-    timestamp: '2023-12-10T11:20:00Z'
-  },
-  {
-    id: '6',
-    description: 'Car Maintenance',
-    amount: 120.00,
-    category: 'Car - Other',
-    date: '2023-12-05',
-    isReimbursement: false,
-    reimbursementAmount: 0,
-    timestamp: '2023-12-05T14:00:00Z'
-  },
-  {
-    id: '7',
-    description: 'November Rent',
-    amount: 1200.00,
-    category: 'Rent and Council Tax',
-    date: '2023-11-01',
-    isReimbursement: false,
-    reimbursementAmount: 0,
-    timestamp: '2023-11-01T09:00:00Z'
-  }
-];
+
 // Monthly Calendar Picker Component
 const MonthlyCalendar = ({ value, onChange, availableMonths, onClose }) => {
   const currentDate = new Date();
@@ -181,7 +109,7 @@ const MonthlyCalendar = ({ value, onChange, availableMonths, onClose }) => {
 };
 
 const ExpenseTracker = () => {
-  const [expenses, setExpenses] = useState(sampleExpenses);
+  const [expenses, setExpenses] = useState([]);
   const [editingExpense, setEditingExpense] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false)

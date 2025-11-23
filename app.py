@@ -120,9 +120,78 @@ def delete_expense(expense_id):
             return jsonify({'error': 'Failed to delete expense'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
 
-# Other routes (stats, export, health, debug) can stay unchanged
-# They will continue to call load_expenses() and work as before
+
+@app.route('/api/expenses/<expense_id>', methods=['PUT'])
+def update_expense(expense_id):
+    try:
+        data = request.get_json()
+        required_fields = ['description', 'amount', 'category', 'date']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        expenses = load_expenses()
+        expense_found = False
+        
+        for expense in expenses:
+            if expense['id'] == expense_id:
+                expense.update({
+                    'description': data['description'],
+                    'amount': float(data['amount']),
+                    'category': data['category'],
+                    'date': data['date'],
+                    'isReimbursement': bool(data.get('isReimbursement', False)),
+                    'reimbursementAmount': float(data.get('reimbursementAmount', 0)),
+                    'timestamp': datetime.now().isoformat()  # Update timestamp
+                })
+                expense_found = True
+                break
+        
+        if not expense_found:
+            return jsonify({'error': 'Expense not found'}), 404
+            
+        if save_expenses(expenses):
+            return jsonify({'message': 'Expense updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to update expense'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500@app.route('/api/expenses/<expense_id>', methods=['PUT'])
+def update_expense(expense_id):
+    try:
+        data = request.get_json()
+        required_fields = ['description', 'amount', 'category', 'date']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        expenses = load_expenses()
+        expense_found = False
+        
+        for expense in expenses:
+            if expense['id'] == expense_id:
+                expense.update({
+                    'description': data['description'],
+                    'amount': float(data['amount']),
+                    'category': data['category'],
+                    'date': data['date'],
+                    'isReimbursement': bool(data.get('isReimbursement', False)),
+                    'reimbursementAmount': float(data.get('reimbursementAmount', 0)),
+                    'timestamp': datetime.now().isoformat()  # Update timestamp
+                })
+                expense_found = True
+                break
+        
+        if not expense_found:
+            return jsonify({'error': 'Expense not found'}), 404
+            
+        if save_expenses(expenses):
+            return jsonify({'message': 'Expense updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to update expense'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

@@ -15,30 +15,14 @@ CORS(app)  # Enable CORS for React frontend
 # Google Sheets Setup
 # -----------------------------
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-SHEET_NAME = os.environ.get("SHEET_NAME")  # e.g., "Expenses"
+SHEET_NAME = os.environ.get("SHEET_NAME") # e.g., "Expenses"
 
-# Initialize sheet as None, will be set in try block
-sheet = None
 
-try:
-    if not GOOGLE_CREDENTIALS_JSON:
-        raise RuntimeError("GOOGLE_CREDENTIALS_JSON environment variable not set!")
-    if not SHEET_NAME:
-        raise RuntimeError("SHEET_NAME environment variable not set!")
-    
-    creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    gc = gspread.authorize(credentials)
-    sheet = gc.open(SHEET_NAME).sheet1
-    print("✅ Successfully connected to Google Sheets")
-    
-except Exception as e:
-    print(f"❌ Error connecting to Google Sheets: {e}")
-    sheet = None
+creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+gc = gspread.authorize(credentials)
+sheet = gc.open(SHEET_NAME).sheet1
 
 # -----------------------------
 # Helper functions
@@ -97,7 +81,7 @@ def serve_static(path):
         return send_from_directory(app.static_folder, path)
     except:
         return send_from_directory(app.static_folder, 'index.html')
-
+    
 @app.route('/api/health')
 def health_check():
     """Health check endpoint to verify Google Sheets connection"""
@@ -203,6 +187,7 @@ def update_expense(expense_id):
     except Exception as e:
         print(f"❌ Error in PUT /api/expenses: {e}")
         return jsonify({'error': str(e)}), 500
+    
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

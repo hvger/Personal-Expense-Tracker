@@ -122,7 +122,7 @@ const ExpenseTracker = () => {
     isReimbursement: false,
     reimbursementAmount: ''
   });
-/*
+
    // Toast notification state
   const [toasts, setToasts] = useState([]);
 
@@ -170,7 +170,7 @@ const ExpenseTracker = () => {
       </div>
     );
   };
-*/
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
 
@@ -311,7 +311,7 @@ const ExpenseTracker = () => {
   // Add new expense
   const addExpense = async () => {
     if (!formData.description || !formData.amount || !formData.category) {
-      //addToast('Please fill in all required fields', 'error');
+      addToast('Please fill in all required fields', 'error');
       return;
     }
 
@@ -344,11 +344,11 @@ const ExpenseTracker = () => {
           isReimbursement: false,
           reimbursementAmount: ''
         });
-        //addToast('Expense added successfully!', 'success');
+        addToast('Expense added successfully!', 'success');
       }
     } catch (error) {
       console.error('Error adding expense:', error);
-      //addToast('Failed to add expense', 'error');
+      addToast('Failed to add expense', 'error');
     }
   };
 
@@ -368,13 +368,13 @@ const ExpenseTracker = () => {
 
       if (response.ok) {
         setExpenses(expenses.filter(expense => expense.id !== expenseToDelete.id));
-        //addToast('Expense deleted successfully', 'success');
+        addToast('Expense deleted successfully', 'success');
       } else {
-        //addToast('Failed to delete expense', 'error');
+        addToast('Failed to delete expense', 'error');
       }
     } catch (error) {
       console.error('Error deleting expense:', error);
-      //addToast('Failed to delete expense', 'error');
+      addToast('Failed to delete expense', 'error');
     } finally {
       setShowDeleteConfirm(false);
       setExpenseToDelete(null);
@@ -403,7 +403,7 @@ const ExpenseTracker = () => {
       }
     } catch (error) {
       console.error('Error updating expense:', error);
-      //addToast('Failed to update expense', 'error');
+      addToast('Failed to update expense', 'error');
     }
   };
 
@@ -450,7 +450,7 @@ const ExpenseTracker = () => {
       }
     } catch (error) {
       console.error('Error duplicating expense:', error);
-      //addToast('Failed to duplicate expense', 'error');
+      addToast('Failed to duplicate expense', 'error');
     }
   };
 
@@ -466,7 +466,7 @@ const ExpenseTracker = () => {
       reimbursementAmount: expense.reimbursementAmount ? expense.reimbursementAmount.toString() : ''
     });
     setShowDuplicateModal(true);
-    //addToast('Expense copied to form', 'info');
+    addToast('Expense copied to form', 'info');
   };
   // Calculate totals with reimbursement logic
   const fuelExpenses = expenses.filter(expense => expense.category === 'Car - Fuel');
@@ -2937,6 +2937,12 @@ const ExpenseTracker = () => {
           </div>
         )}
       </div>
+        {/* Toast Notifications Container */}
+        <div className="fixed top-4 right-4 z-50">
+          {toasts.map(toast => (
+            <Toast key={toast.id} toast={toast} />
+          ))}
+        </div>
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && expenseToDelete && (

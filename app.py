@@ -15,7 +15,7 @@ CORS(app)  # Enable CORS for React frontend
 # Google Sheets Setup
 # -----------------------------
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-SHEET_NAME = os.environ.get("expenses") # e.g., "Expenses"
+SHEET_NAME = os.environ.get("SHEET_NAME") # e.g., "Expenses"
 
 
 creds_dict = json.loads(GOOGLE_CREDENTIALS_JSON)
@@ -35,24 +35,18 @@ sheet = gc.open(SHEET_NAME).sheet1
 def load_expenses():
     """Load expenses from Google Sheet"""
     try:
-        if sheet is None:
-            print("Sheet not initialized")
-            return []
-            
         records = sheet.get_all_records()
         expenses = []
         for rec in records:
-            # Handle missing fields and type conversions
             rec['isReimbursement'] = bool(rec.get('isReimbursement', False))
             rec['reimbursementAmount'] = float(rec.get('reimbursementAmount', 0)) if rec.get('reimbursementAmount') else 0.0
             rec['amount'] = float(rec.get('amount', 0))
             expenses.append(rec)
         # Sort by timestamp descending
         expenses.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-        print(f"✅ Loaded {len(expenses)} expenses from Google Sheets")
         return expenses
     except Exception as e:
-        print(f"❌ Error loading expenses: {e}")
+        print(f"Error loading expenses: {e}")
         return []
 
 def save_expenses(expenses):

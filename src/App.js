@@ -299,15 +299,19 @@ const ExpenseTracker = () => {
   // Load expenses
   const loadExpenses = async () => {
     try {
+      console.log('Loading expenses...'); // Add this for debugging
       const response = await fetch("/api/expenses");
+      console.log('Response status:', response.status); // Debug
       if (response.ok) {
         const data = await response.json();
+        console.log('Loaded expenses:', data.length); // Debug
         setExpenses(data);
-        addToast('Expenses loaded successfully', 'success');
+        // Remove the toast call temporarily
+      } else {
+        console.error('Failed to load expenses, status:', response.status);
       }
     } catch (error) {
       console.error('Error loading expenses:', error);
-      addToast('Failed to load expenses', 'error');
     }
   };
 

@@ -7,6 +7,7 @@ from flask_cors import CORS
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from waitress import serve
 
 app = Flask(__name__, static_folder='build')
 CORS(app)  # Enable CORS for React frontend
@@ -192,5 +193,4 @@ def update_expense(expense_id):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     # Use a production WSGI server
-    from waitress import serve
     serve(app, host='0.0.0.0', port=port)

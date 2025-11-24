@@ -259,7 +259,12 @@ const ExpenseTracker = () => {
     { value: 'Internet', icon: Wifi, color: 'bg-pink-500' }
   ];
 
+  useEffect(() => {
+    loadExpenses();
+  }, []);
+
   // Click outside handler
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (overallSummaryCalendarRef.current && !overallSummaryCalendarRef.current.contains(event.target)) {
@@ -397,9 +402,9 @@ const ExpenseTracker = () => {
         loadExpenses();
         setShowEditModal(false);
         setEditingExpense(null);
-        //addToast('Expense updated successfully!', 'success');
+        addToast('Expense updated successfully!', 'success');
       } else {
-        //addToast('Failed to update expense', 'error');
+        addToast('Failed to update expense', 'error');
       }
     } catch (error) {
       console.error('Error updating expense:', error);
@@ -2342,40 +2347,36 @@ const ExpenseTracker = () => {
         </div>
 
         <div className="space-y-8">
-          {/* Category Breakdown - Full Width at Top */}
-          {categoryTotals.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Summary</h3>
-              <div className="flex flex-wrap gap-2">
-                {categoryTotals.map((item) => {
-                  const IconComponent = item.icon;
-                  return (
-                    <div key={item.value} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg min-w-fit flex-1">
-                      <div className={`p-1.5 rounded-lg ${item.color}`}>
-                        <IconComponent className="text-white" size={14} />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-medium text-gray-900 text-sm">{item.value}</p>
-                        <p className="text-xs text-gray-600">{item.count} entries</p>
-                        <p className="font-medium text-gray-900 mt-0.5 text-xs">
-                          {item.isReimbursement ? '+' : '-'}£{item.total.toFixed(2)}
-                        </p>
-                        {item.reimbursements > 0 && (
-                          <p className="text-xs text-green-600">+£{item.reimbursements.toFixed(2)}</p>
-                        )}
-                        {(item.reimbursements > 0 || item.isReimbursement) && (
-                          <p className="text-xs font-medium text-purple-600">
-                            £{item.isReimbursement ? item.total.toFixed(2) : item.net.toFixed(2)} net
-                          </p>
-                        )}
-                      </div>
+        {/* Category Breakdown - Full Width at Top */}
+        {categoryTotals.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Category Summary</h3>
+            <div className="flex flex-wrap gap-2">
+              {categoryTotals.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <div key={item.value} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg min-w-fit flex-1">
+                    <div className={`p-1.5 rounded-lg ${item.color}`}>
+                      <IconComponent className="text-white" size={14} />
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900 text-sm">{item.value}</p>
+                      <p className="text-xs text-gray-600">{item.count} entries</p>
+                      <p className="font-medium text-gray-900 mt-0.5 text-xs">
+                        {item.isReimbursement ? '+' : '-'}£{item.total.toFixed(2)}
+                      </p>
+                      {item.reimbursements > 0 && (
+                        <p className="text-xs text-green-600">+£{item.reimbursements.toFixed(2)}</p>
+                      )}
+                      {/* Purple net line removed completely */}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Add Expense Form */}

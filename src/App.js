@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight,  CheckCircle, XCircle, Info, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Trash2,CreditCard, Wrench, Wifi, House, DollarSign, PoundSterling, ShoppingCart, Utensils, Car, RefreshCw, BarChart3, Calendar, ChevronLeft, ChevronRight, CheckCircle, XCircle, Info, X, Gift, Sofa, Package } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, LineChart, Line } from 'recharts';
 
 
@@ -179,14 +179,17 @@ const ExpenseTracker = () => {
   // Separate periods for donut charts
   const [donutCarPeriod, setDonutCarPeriod] = useState('recent');
   const [donutGroceryPeriod, setDonutGroceryPeriod] = useState('recent');
+  const [donutOtherPeriod, setDonutOtherPeriod] = useState('recent'); // Added for other expenses
 
   // Separate calendar visibility states for donut charts
   const [showDonutCarCalendar, setShowDonutCarCalendar] = useState(false);
   const [showDonutGroceryCalendar, setShowDonutGroceryCalendar] = useState(false);
+  const [showDonutOtherCalendar, setShowDonutOtherCalendar] = useState(false); // Added for other expenses
 
   // Separate refs for donut chart calendars
   const donutCarCalendarRef = useRef(null);
   const donutGroceryCalendarRef = useRef(null);
+  const donutOtherCalendarRef = useRef(null); // Added for other expenses
   
   const [showCarBarChart, setShowCarBarChart] = useState(false);
   const [showCarPieChart, setShowCarPieChart] = useState(false);
@@ -204,10 +207,17 @@ const ExpenseTracker = () => {
   const [groceryChartPeriod, setGroceryChartPeriod] = useState('recent'); // 'recent' or specific month
   const [groceryChartMode, setGroceryChartMode] = useState('breakdown'); // 'breakdown' or 'total'
   
+  // New state for other expenses chart
+  const [showOtherBarChart, setShowOtherBarChart] = useState(false);
+  const [showOtherPieChart, setShowOtherPieChart] = useState(false);
+  const [otherChartPeriod, setOtherChartPeriod] = useState('recent');
+  const [otherChartMode, setOtherChartMode] = useState('breakdown');
+  
   // New state for summary period selection - separate for each section
   const [grocerySummaryPeriod, setGrocerySummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
   const [carSummaryPeriod, setCarSummaryPeriod] = useState('current'); // 'current' or specific month like '2025-08'
   const [housingSummaryPeriod, setHousingSummaryPeriod] = useState('current'); // Added missing state
+  const [otherSummaryPeriod, setOtherSummaryPeriod] = useState('current'); // Added for other expenses
   
   // New state for transaction modal
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -223,8 +233,10 @@ const ExpenseTracker = () => {
   const [showGrocerySummaryCalendar, setShowGrocerySummaryCalendar] = useState(false);
   const [showCarSummaryCalendar, setShowCarSummaryCalendar] = useState(false);
   const [showHousingSummaryCalendar, setShowHousingSummaryCalendar] = useState(false); // Added missing state
+  const [showOtherSummaryCalendar, setShowOtherSummaryCalendar] = useState(false); // Added for other expenses
   const [showChartCalendar, setShowChartCalendar] = useState(false);
   const [showGroceryCalendar, setShowGroceryCalendar] = useState(false);
+  const [showOtherChartCalendar, setShowOtherChartCalendar] = useState(false); // Added for other expenses
 
   const [showExpensesList, setShowExpensesList] = useState(false);
 
@@ -244,8 +256,10 @@ const ExpenseTracker = () => {
   const grocerySummaryCalendarRef = useRef(null);
   const carSummaryCalendarRef = useRef(null);
   const housingSummaryCalendarRef = useRef(null); // Added missing ref
+  const otherSummaryCalendarRef = useRef(null); // Added for other expenses
   const chartCalendarRef = useRef(null);
   const groceryCalendarRef = useRef(null);
+  const otherCalendarRef = useRef(null); // Added for other expenses
 
    const categories = [
     { value: 'Groceries', icon: ShoppingCart, color: 'bg-green-500' },
@@ -256,7 +270,11 @@ const ExpenseTracker = () => {
     { value: 'Fuel Reimbursement', icon: RefreshCw, color: 'bg-purple-500' },
     { value: 'Rent and Council Tax', icon: House, color: 'bg-indigo-500' },
     { value: 'Utilities', icon: Wrench, color: 'bg-yellow-500' },
-    { value: 'Internet', icon: Wifi, color: 'bg-pink-500' }
+    { value: 'Internet', icon: Wifi, color: 'bg-pink-500' },
+    // New categories for Other Expenses
+    { value: 'Household and Furniture', icon: Sofa, color: 'bg-cyan-500' },
+    { value: 'Holidays and Presents', icon: Gift, color: 'bg-amber-500' },
+    { value: 'Miscellaneous', icon: Package, color: 'bg-gray-500' }
   ];
 
   useEffect(() => {
@@ -279,11 +297,17 @@ const ExpenseTracker = () => {
       if (housingSummaryCalendarRef.current && !housingSummaryCalendarRef.current.contains(event.target)) {
         setShowHousingSummaryCalendar(false);
       }
+      if (otherSummaryCalendarRef.current && !otherSummaryCalendarRef.current.contains(event.target)) {
+        setShowOtherSummaryCalendar(false);
+      }
       if (chartCalendarRef.current && !chartCalendarRef.current.contains(event.target)) {
         setShowChartCalendar(false);
       }
       if (groceryCalendarRef.current && !groceryCalendarRef.current.contains(event.target)) {
         setShowGroceryCalendar(false);
+      }
+      if (otherCalendarRef.current && !otherCalendarRef.current.contains(event.target)) {
+        setShowOtherChartCalendar(false);
       }
     };
 
@@ -524,7 +548,12 @@ const ExpenseTracker = () => {
           return sum + expense.amount - (expense.reimbursementAmount || 0);
         }, 0);
 
-      const total = housingTotal + groceryTotal + carTotal;
+      // Other expenses
+      const otherTotal = monthlyExpenses
+        .filter(expense => ['Household and Furniture', 'Holidays and Presents', 'Miscellaneous'].includes(expense.category))
+        .reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+
+      const total = housingTotal + groceryTotal + carTotal + otherTotal;
 
       periods.push({
         month: monthKey,
@@ -532,6 +561,7 @@ const ExpenseTracker = () => {
         housing: housingTotal,
         grocery: groceryTotal,
         car: Math.max(0, carTotal), // Ensure car expenses don't go negative
+        other: otherTotal,
         total
       });
     }
@@ -689,7 +719,7 @@ const ExpenseTracker = () => {
 
   const monthlyNetCarExpenses = monthlyCarFuel + monthlyCarOther - monthlyFuelReimbursements;
 
-  // Housing-specific calculations by category - 
+  // Housing-specific calculations by category
   const getMonthlyHousingByCategory = (category) => {
     return expenses.filter(expense => {
       const matchesCategory = expense.category === category;
@@ -732,6 +762,48 @@ const ExpenseTracker = () => {
   }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
 
   const monthlyNetTotal = monthlyHousingExpenses;
+
+  // Other expenses calculations by category
+  const getMonthlyOtherByCategory = (category) => {
+    return expenses.filter(expense => {
+      const matchesCategory = expense.category === category;
+      if (!matchesCategory) return false;
+      
+      if (otherSummaryPeriod === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === otherSummaryPeriod;
+      }
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+  };
+
+  const monthlyHouseholdFurniture = getMonthlyOtherByCategory('Household and Furniture');
+  const monthlyHolidaysPresents = getMonthlyOtherByCategory('Holidays and Presents');
+  const monthlyMiscellaneous = getMonthlyOtherByCategory('Miscellaneous');
+
+  // Calculate total monthly other expenses
+  const monthlyOtherExpenses = expenses.filter(expense => {
+    const isOtherCategory = ['Household and Furniture', 'Holidays and Presents', 'Miscellaneous'].includes(expense.category);
+    if (!isOtherCategory) return false;
+    
+    if (otherSummaryPeriod === 'current') {
+      const expenseMonth = new Date(expense.date).getMonth();
+      const currentMonth = new Date().getMonth();
+      const expenseYear = new Date(expense.date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      return expenseMonth === currentMonth && expenseYear === currentYear;
+    } else {
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === otherSummaryPeriod;
+    }
+  }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
 
   // Helper function to get available months from expenses
   const getAvailableMonths = () => {
@@ -804,8 +876,18 @@ const ExpenseTracker = () => {
       return monthKey === lastMonthSummaryPeriod;
     }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
     
+    // Calculate other expenses for comparison month
+    const lastMonthOtherExpenses = expenses.filter(expense => {
+      const isOtherCategory = ['Household and Furniture', 'Holidays and Presents', 'Miscellaneous'].includes(expense.category);
+      if (!isOtherCategory) return false;
+      
+      const expenseMonth = new Date(expense.date);
+      const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === lastMonthSummaryPeriod;
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+    
     return {
-      total: lastMonthGroceryExpenses + lastMonthNetCarExpenses + lastMonthHousingExpenses,
+      total: lastMonthGroceryExpenses + lastMonthNetCarExpenses + lastMonthHousingExpenses + lastMonthOtherExpenses,
       monthName: comparisonMonthName
     };
   };
@@ -883,11 +965,30 @@ const ExpenseTracker = () => {
 
     const netCarExpensesForPeriod = carExpensesForPeriod - fuelReimbursementsForPeriod;
 
+    // Other expenses for the selected period
+    const otherExpensesForPeriod = expenses.filter(expense => {
+      const isOtherCategory = ['Household and Furniture', 'Holidays and Presents', 'Miscellaneous'].includes(expense.category);
+      if (!isOtherCategory) return false;
+      
+      if (period === 'current') {
+        const expenseMonth = new Date(expense.date).getMonth();
+        const currentMonth = new Date().getMonth();
+        const expenseYear = new Date(expense.date).getFullYear();
+        const currentYear = new Date().getFullYear();
+        return expenseMonth === currentMonth && expenseYear === currentYear;
+      } else {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === period;
+      }
+    }).reduce((sum, expense) => sum + expense.amount - (expense.reimbursementAmount || 0), 0);
+
     return {
       housing: housingExpensesForPeriod,
       grocery: groceryExpensesForPeriod,
       car: netCarExpensesForPeriod,
-      total: housingExpensesForPeriod + groceryExpensesForPeriod + netCarExpensesForPeriod
+      other: otherExpensesForPeriod,
+      total: housingExpensesForPeriod + groceryExpensesForPeriod + netCarExpensesForPeriod + otherExpensesForPeriod
     };
   };
 
@@ -937,6 +1038,23 @@ const ExpenseTracker = () => {
           return monthKey === period;
         }
       });
+    } else if (chartType === 'other') {
+      return expenses.filter(expense => {
+        const matchesCategory = ['Household and Furniture', 'Holidays and Presents', 'Miscellaneous'].includes(expense.category);
+        if (!matchesCategory) return false;
+        
+        if (period === 'recent') {
+          // Last 8 weeks logic
+          const eightWeeksAgo = new Date();
+          eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+          return new Date(expense.date) >= eightWeeksAgo;
+        } else {
+          // Monthly logic
+          const expenseMonth = new Date(expense.date);
+          const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+          return monthKey === period;
+        }
+      });
     }
     return [];
   };
@@ -955,6 +1073,14 @@ const ExpenseTracker = () => {
     groceries: donutGroceryData.filter(e => e.category === 'Groceries').reduce((sum, e) => sum + e.amount, 0),
     dining: donutGroceryData.filter(e => e.category === 'Dining').reduce((sum, e) => sum + e.amount, 0),
     smallShop: donutGroceryData.filter(e => e.category === 'Small Shop').reduce((sum, e) => sum + e.amount, 0)
+  };
+
+  // Donut Chart Data - Other
+  const donutOtherData = getDonutChartData(donutOtherPeriod, 'other');
+  const donutOtherTotals = {
+    household: donutOtherData.filter(e => e.category === 'Household and Furniture').reduce((sum, e) => sum + e.amount, 0),
+    holidays: donutOtherData.filter(e => e.category === 'Holidays and Presents').reduce((sum, e) => sum + e.amount, 0),
+    miscellaneous: donutOtherData.filter(e => e.category === 'Miscellaneous').reduce((sum, e) => sum + e.amount, 0)
   };
 
   // Helper function to get period display name
@@ -1197,8 +1323,74 @@ const ExpenseTracker = () => {
     return sortedPeriods;
   };
 
+  // New function for other expenses chart data
+  const getOtherChartData = () => {
+    const periods = {};
+    const otherExpenses = expenses.filter(expense => 
+      expense.category === 'Household and Furniture' || expense.category === 'Holidays and Presents' || expense.category === 'Miscellaneous'
+    );
+    
+    // Filter by selected period if not 'recent'
+    const filteredOtherExpenses = otherChartPeriod === 'recent' ? otherExpenses :
+      otherExpenses.filter(expense => {
+        const expenseMonth = new Date(expense.date);
+        const monthKey = `${expenseMonth.getFullYear()}-${String(expenseMonth.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === otherChartPeriod;
+      });
+    
+    // Group other expenses by category
+    filteredOtherExpenses.forEach(expense => {
+      const date = new Date(expense.date);
+      let periodKey, periodLabel;
+      
+      if (otherChartPeriod === 'recent') {
+        // Weekly view for recent data
+        const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+        periodKey = weekStart.toISOString().split('T')[0];
+        periodLabel = weekStart.toLocaleDateString('en-GB', { 
+          day: 'numeric', 
+          month: 'short' 
+        });
+      } else {
+        // Daily view for specific month
+        periodKey = date.toISOString().split('T')[0];
+        periodLabel = date.getDate().toString();
+      }
+      
+      if (!periods[periodKey]) {
+        periods[periodKey] = { 
+          period: periodKey, 
+          household: 0, 
+          holidays: 0, 
+          miscellaneous: 0,
+          total: 0, 
+          periodLabel 
+        };
+      }
+      
+      if (expense.category === 'Household and Furniture') {
+        periods[periodKey].household += expense.amount;
+      } else if (expense.category === 'Holidays and Presents') {
+        periods[periodKey].holidays += expense.amount;
+      } else if (expense.category === 'Miscellaneous') {
+        periods[periodKey].miscellaneous += expense.amount;
+      }
+      periods[periodKey].total += expense.amount;
+    });
+    
+    let sortedPeriods = Object.values(periods).sort((a, b) => new Date(a.period) - new Date(b.period));
+    
+    // Apply limit only for recent data
+    if (otherChartPeriod === 'recent') {
+      sortedPeriods = sortedPeriods.slice(-8); // Last 8 weeks
+    }
+    
+    return sortedPeriods;
+  };
+
   const chartData = getFuelChartData();
   const groceryChartData = getGroceryChartData();
+  const otherChartData = getOtherChartData();
   const availableMonths = getAvailableMonths();
 
   const showReimbursementFields = formData.category === 'Car - Fuel' || formData.category === 'Car - Other';
@@ -1600,17 +1792,123 @@ const ExpenseTracker = () => {
               </div>
             </div>
           </div>
+
+          {/* Other Expenses Summary */}
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Package className="text-cyan-600" size={20} />
+                Other Expenses Summary
+              </h2>
+              <div className="relative" ref={otherSummaryCalendarRef}>
+                <button
+                  onClick={() => setShowOtherSummaryCalendar(!showOtherSummaryCalendar)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Calendar size={16} />
+                  {getPeriodDisplayName(otherSummaryPeriod, availableMonths)}
+                </button>
+                {showOtherSummaryCalendar && (
+                  <MonthlyCalendar
+                    value={otherSummaryPeriod}
+                    onChange={setOtherSummaryPeriod}
+                    availableMonths={availableMonths}
+                    onClose={() => setShowOtherSummaryCalendar(false)}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-slate-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  ['Household and Furniture', 'Holidays and Presents', 'Miscellaneous'], 
+                  otherSummaryPeriod, 
+                  `${getPeriodDisplayName(otherSummaryPeriod, availableMonths)} - All Other Expenses`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {getPeriodDisplayName(otherSummaryPeriod, availableMonths)} Total
+                    </p>
+                    <p className="text-2xl font-bold text-slate-600">£{monthlyOtherExpenses.toFixed(2)}</p>
+                  </div>
+                  <PoundSterling className="text-slate-500" size={32} />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-cyan-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Household and Furniture', 
+                  otherSummaryPeriod, 
+                  `${getPeriodDisplayName(otherSummaryPeriod, availableMonths)} - Household and Furniture`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Household and Furniture</p>
+                    <p className="text-2xl font-bold text-cyan-600">£{monthlyHouseholdFurniture.toFixed(2)}</p>
+                  </div>
+                  <Sofa className="text-cyan-500" size={32} />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-amber-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Holidays and Presents', 
+                  otherSummaryPeriod, 
+                  `${getPeriodDisplayName(otherSummaryPeriod, availableMonths)} - Holidays and Presents`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Holidays and Presents</p>
+                    <p className="text-2xl font-bold text-amber-600">£{monthlyHolidaysPresents.toFixed(2)}</p>
+                  </div>
+                  <Gift className="text-amber-500" size={32} />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-gray-500 cursor-pointer hover:shadow-xl transition-shadow"
+                onClick={() => showTransactionsForCategory(
+                  'Miscellaneous', 
+                  otherSummaryPeriod, 
+                  `${getPeriodDisplayName(otherSummaryPeriod, availableMonths)} - Miscellaneous`
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Miscellaneous</p>
+                    <p className="text-2xl font-bold text-gray-600">£{monthlyMiscellaneous.toFixed(2)}</p>
+                  </div>
+                  <Package className="text-gray-500" size={32} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Updated Fuel Chart - now includes Car-Other */}
+        {/* Charts Section - Updated to 3 columns on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Car Expenses Chart */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <BarChart3 className="text-red-600" size={24} />
-                {chartPeriod === 'recent' ? 'Recent Car Spending' : `Car Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
-              </h3>
+            {/* Header with two lines */}
+            <div className="mb-4">
+              {/* First line: Title and Show/Hide button */}
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <BarChart3 className="text-red-600" size={24} />
+                  {chartPeriod === 'recent' ? 'Recent Car Spending' : `Car Spending - ${getPeriodDisplayName(chartPeriod, availableMonths)}`}
+                </h3>
+                <button
+                  onClick={() => setShowCarBarChart(!showCarBarChart)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  {showCarBarChart ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              
+              {/* Second line: Calendar and mode buttons */}
               <div className="flex gap-2">
                 <div className="relative" ref={chartCalendarRef}>
                   <button
@@ -1647,12 +1945,6 @@ const ExpenseTracker = () => {
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowCarBarChart(!showCarBarChart)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  {showCarBarChart ? 'Hide' : 'Show'}
-                </button>
                 {showCarBarChart && (
                   <div className="flex gap-2">
                     <button
@@ -1735,11 +2027,23 @@ const ExpenseTracker = () => {
 
           {/* Grocery Chart */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <BarChart3 className="text-green-600" size={24} />
-                {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
-              </h3>
+            {/* Header with two lines */}
+            <div className="mb-4">
+              {/* First line: Title and Show/Hide button */}
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <BarChart3 className="text-green-600" size={24} />
+                  {groceryChartPeriod === 'recent' ? 'Recent Grocery & Dining' : `Grocery & Dining - ${getPeriodDisplayName(groceryChartPeriod, availableMonths)}`}
+                </h3>
+                <button
+                  onClick={() => setShowGroceryBarChart(!showGroceryBarChart)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  {showGroceryBarChart ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              
+              {/* Second line: Calendar and mode buttons */}
               <div className="flex gap-2">
                 <div className="relative" ref={groceryCalendarRef}>
                   <button
@@ -1776,12 +2080,6 @@ const ExpenseTracker = () => {
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowGroceryBarChart(!showGroceryBarChart)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  {showGroceryBarChart ? 'Hide' : 'Show'}
-                </button>
                 {showGroceryBarChart && (
                   <div className="flex gap-2">
                     <button
@@ -1861,10 +2159,145 @@ const ExpenseTracker = () => {
               </div>
             )}
           </div>
+
+          {/* Other Expenses Chart */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            {/* Header with two lines */}
+            <div className="mb-4">
+              {/* First line: Title and Show/Hide button */}
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <BarChart3 className="text-cyan-600" size={24} />
+                  {otherChartPeriod === 'recent' ? 'Recent Other Spending' : `Other Spending - ${getPeriodDisplayName(otherChartPeriod, availableMonths)}`}
+                </h3>
+                <button
+                  onClick={() => setShowOtherBarChart(!showOtherBarChart)}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+                >
+                  {showOtherBarChart ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              
+              {/* Second line: Calendar and mode buttons */}
+              <div className="flex gap-2">
+                <div className="relative" ref={otherCalendarRef}>
+                  <button
+                    onClick={() => setShowOtherChartCalendar(!showOtherChartCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Calendar size={16} />
+                    {otherChartPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(otherChartPeriod, availableMonths)}
+                  </button>
+                  {showOtherChartCalendar && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                      <button
+                        onClick={() => {
+                          setOtherChartPeriod('recent');
+                          setShowOtherChartCalendar(false);
+                        }}
+                        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          otherChartPeriod === 'recent'
+                            ? 'bg-cyan-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Last 8 Weeks
+                      </button>
+                      <MonthlyCalendar
+                        value={otherChartPeriod}
+                        onChange={(value) => {
+                          setOtherChartPeriod(value);
+                          setShowOtherChartCalendar(false);
+                        }}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowOtherChartCalendar(false)}
+                      />
+                    </div>
+                  )}
+                </div>
+                {showOtherBarChart && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setOtherChartMode('breakdown')}
+                      className={`px-3 py-2 rounded-lg transition-colors ${
+                        otherChartMode === 'breakdown' 
+                          ? 'bg-cyan-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Breakdown
+                    </button>
+                    <button
+                      onClick={() => setOtherChartMode('total')}
+                      className={`px-3 py-2 rounded-lg transition-colors ${
+                        otherChartMode === 'total' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Total
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {showOtherBarChart && (
+              <div className="h-64">
+                {otherChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={otherChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="periodLabel" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value, name) => [`£${value.toFixed(2)}`, name]}
+                        labelStyle={{ color: '#374151' }}
+                      />
+                      <Legend />
+                      {otherChartMode === 'breakdown' ? (
+                        <>
+                          <Bar 
+                            dataKey="household" 
+                            fill="#06b6d4" 
+                            name="Household & Furniture"
+                          />
+                          <Bar 
+                            dataKey="holidays" 
+                            fill="#f59e0b" 
+                            name="Holidays & Presents"
+                          />
+                          <Bar 
+                            dataKey="miscellaneous" 
+                            fill="#6b7280" 
+                            name="Miscellaneous"
+                          />
+                        </>
+                      ) : (
+                        <Bar 
+                          dataKey="total" 
+                          fill="#6366f1" 
+                          name="Total Spending"
+                        />
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-gray-500">
+                      <BarChart3 className="mx-auto mb-3 text-gray-400" size={48} />
+                      <p className="text-lg font-medium">No other expenses found</p>
+                      <p className="text-sm">No data available for the selected period</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Donut Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Donut Charts Section - Updated to 4 columns on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           {/* Monthly Summary Donut Chart */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-4">
@@ -1900,8 +2333,8 @@ const ExpenseTracker = () => {
             </div>
             
             {showMonthlySummaryChart && (
-              <div className="h-96 flex items-center justify-center">
-                {(mainSummaryTotals.housing > 0 || mainSummaryTotals.grocery > 0 || mainSummaryTotals.car > 0) ? (
+              <div className="h-80 flex items-center justify-center">
+                {(mainSummaryTotals.housing > 0 || mainSummaryTotals.grocery > 0 || mainSummaryTotals.car > 0 || mainSummaryTotals.other > 0) ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -1920,6 +2353,11 @@ const ExpenseTracker = () => {
                             name: 'Car Expenses',
                             value: mainSummaryTotals.car,
                             fill: '#ef4444'
+                          },
+                          {
+                            name: 'Other Expenses',
+                            value: mainSummaryTotals.other,
+                            fill: '#06b6d4'
                           }
                         ].filter(item => item.value > 0)}
                         cx="50%"
@@ -1941,18 +2379,18 @@ const ExpenseTracker = () => {
                           return (
                             <g>
                               {/* Percentage inside */}
-                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="12" fontWeight="bold">
                                 {(percent * 100).toFixed(0)}%
                               </text>
                               {/* £ amount outside */}
-                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="10">
                                 £{value.toFixed(0)}
                               </text>
                             </g>
                           );
                         }}
-                        outerRadius={110}
-                        innerRadius={55}
+                        outerRadius={90}
+                        innerRadius={45}
                         fill="#8884d8"
                         dataKey="value"
                       />
@@ -1960,10 +2398,10 @@ const ExpenseTracker = () => {
                         verticalAlign="top"
                         align="center"
                         layout="vertical"
-                        iconSize={12}
+                        iconSize={10}
                         wrapperStyle={{
-                          paddingLeft: '20px',
-                          fontSize: '14px'
+                          paddingLeft: '10px',
+                          fontSize: '12px'
                         }}
                       />
                     </PieChart>
@@ -2032,7 +2470,7 @@ const ExpenseTracker = () => {
             </div>
             
             {showCarPieChart && (
-              <div className="h-96 flex items-center justify-center">
+              <div className="h-80 flex items-center justify-center">
                 {(donutCarTotals.fuel > 0 || donutCarTotals.carOther > 0 || donutCarTotals.directReimbursements > 0) ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -2073,18 +2511,18 @@ const ExpenseTracker = () => {
                           return (
                             <g>
                               {/* Percentage inside */}
-                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="12" fontWeight="bold">
                                 {(percent * 100).toFixed(0)}%
                               </text>
                               {/* £ amount outside */}
-                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="10">
                                 £{value.toFixed(0)}
                               </text>
                             </g>
                           );
                         }}
-                        outerRadius={110}
-                        innerRadius={55}
+                        outerRadius={90}
+                        innerRadius={45}
                         fill="#8884d8"
                         dataKey="value"
                       />
@@ -2092,10 +2530,10 @@ const ExpenseTracker = () => {
                         verticalAlign="top"
                         align="center"
                         layout="vertical"
-                        iconSize={12}
+                        iconSize={10}
                         wrapperStyle={{
-                          paddingLeft: '20px',
-                          fontSize: '14px'
+                          paddingLeft: '10px',
+                          fontSize: '12px'
                         }}
                       />
                     </PieChart>
@@ -2164,7 +2602,7 @@ const ExpenseTracker = () => {
             </div>
             
             {showGroceryPieChart && (
-              <div className="h-96 flex items-center justify-center">
+              <div className="h-80 flex items-center justify-center">
                 {(donutGroceryTotals.groceries > 0 || donutGroceryTotals.dining > 0 || donutGroceryTotals.smallShop > 0) ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -2205,18 +2643,18 @@ const ExpenseTracker = () => {
                           return (
                             <g>
                               {/* Percentage inside */}
-                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="bold">
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="12" fontWeight="bold">
                                 {(percent * 100).toFixed(0)}%
                               </text>
                               {/* £ amount outside */}
-                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="12">
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="10">
                                 £{value.toFixed(0)}
                               </text>
                             </g>
                           );
                         }}
-                        outerRadius={110}
-                        innerRadius={55}
+                        outerRadius={90}
+                        innerRadius={45}
                         fill="#8884d8"
                         dataKey="value"
                       />
@@ -2224,10 +2662,10 @@ const ExpenseTracker = () => {
                         verticalAlign="top"
                         align="center"
                         layout="vertical"
-                        iconSize={12}
+                        iconSize={10}
                         wrapperStyle={{
-                          paddingLeft: '20px',
-                          fontSize: '14px'
+                          paddingLeft: '10px',
+                          fontSize: '12px'
                         }}
                       />
                     </PieChart>
@@ -2236,6 +2674,138 @@ const ExpenseTracker = () => {
                   <div className="text-center text-gray-500">
                     <PieChart className="mx-auto mb-3 text-gray-400" size={48} />
                     <p className="text-lg font-medium">No grocery expenses found</p>
+                    <p className="text-sm">No data available for the selected period</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Other Expenses Donut Chart */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <PieChart className="text-cyan-600" size={24} />
+                {otherChartPeriod === 'recent' ? 'Other Expenses Distribution' : `Other Expenses Distribution - ${getPeriodDisplayName(otherChartPeriod, availableMonths)}`}
+              </h3>
+              <div className="flex gap-2">
+                <div className="relative" ref={donutOtherCalendarRef}>
+                  <button
+                    onClick={() => setShowDonutOtherCalendar(!showDonutOtherCalendar)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent flex items-center gap-2 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Calendar size={16} />
+                    {donutOtherPeriod === 'recent' ? 'Last 8 Weeks' : getPeriodDisplayName(donutOtherPeriod, availableMonths)}
+                  </button>
+                  {showDonutOtherCalendar && (
+                    <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50 min-w-[280px]">
+                      <button
+                        onClick={() => {
+                          setDonutOtherPeriod('recent');
+                          setShowDonutOtherCalendar(false);
+                        }}
+                        className={`w-full mb-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          donutOtherPeriod === 'recent'
+                            ? 'bg-cyan-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Last 8 Weeks
+                      </button>
+                      <MonthlyCalendar
+                        value={donutOtherPeriod}
+                        onChange={(value) => {
+                          setDonutOtherPeriod(value);
+                          setShowDonutOtherCalendar(false);
+                        }}
+                        availableMonths={availableMonths}
+                        onClose={() => setShowDonutOtherCalendar(false)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowOtherPieChart(!showOtherPieChart)}
+                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+                >
+                  {showOtherPieChart ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+            
+            {showOtherPieChart && (
+              <div className="h-80 flex items-center justify-center">
+                {(donutOtherTotals.household > 0 || donutOtherTotals.holidays > 0 || donutOtherTotals.miscellaneous > 0) ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          {
+                            name: 'Household & Furniture',
+                            value: donutOtherTotals.household,
+                            fill: '#06b6d4'
+                          },
+                          {
+                            name: 'Holidays & Presents',
+                            value: donutOtherTotals.holidays,
+                            fill: '#f59e0b'
+                          },
+                          {
+                            name: 'Miscellaneous',
+                            value: donutOtherTotals.miscellaneous,
+                            fill: '#6b7280'
+                          }
+                        ].filter(item => item.value > 0)}
+                        cx="50%"
+                        cy="55%"
+                        labelLine={false}
+                        label={({ value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                          if (percent <= 0.05) return '';
+                          
+                          // Position for percentage (inside the colored section)
+                          const innerLabelRadius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const innerX = cx + innerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const innerY = cy + innerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          // Position for £ amount (outside the donut)
+                          const outerLabelRadius = outerRadius + 20;
+                          const outerX = cx + outerLabelRadius * Math.cos(-midAngle * Math.PI / 180);
+                          const outerY = cy + outerLabelRadius * Math.sin(-midAngle * Math.PI / 180);
+                          
+                          return (
+                            <g>
+                              {/* Percentage inside */}
+                              <text x={innerX} y={innerY} fill="white" textAnchor="middle" dominantBaseline="central" fontSize="12" fontWeight="bold">
+                                {(percent * 100).toFixed(0)}%
+                              </text>
+                              {/* £ amount outside */}
+                              <text x={outerX} y={outerY} fill="#374151" textAnchor="middle" dominantBaseline="central" fontSize="10">
+                                £{value.toFixed(0)}
+                              </text>
+                            </g>
+                          );
+                        }}
+                        outerRadius={90}
+                        innerRadius={45}
+                        fill="#8884d8"
+                        dataKey="value"
+                      />
+                      <Legend 
+                        verticalAlign="top"
+                        align="center"
+                        layout="vertical"
+                        iconSize={10}
+                        wrapperStyle={{
+                          paddingLeft: '10px',
+                          fontSize: '12px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <PieChart className="mx-auto mb-3 text-gray-400" size={48} />
+                    <p className="text-lg font-medium">No other expenses found</p>
                     <p className="text-sm">No data available for the selected period</p>
                   </div>
                 )}
@@ -2330,6 +2900,15 @@ const ExpenseTracker = () => {
                       dot={{ fill: '#ef4444', strokeWidth: 2, r: 3 }}
                       activeDot={{ r: 5, fill: '#ef4444' }}
                       name="Car Expenses"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="other" 
+                      stroke="#06b6d4" 
+                      strokeWidth={2}
+                      dot={{ fill: '#06b6d4', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5, fill: '#06b6d4' }}
+                      name="Other Expenses"
                     />
                   </LineChart>
                 </ResponsiveContainer>
